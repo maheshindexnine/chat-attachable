@@ -3,8 +3,16 @@ import { ref } from 'vue'
 import UserList from './UserList.vue'
 import ChatInterface from './ChatInterface.vue'
 
+interface User {
+  id: number
+  name: string
+  type: 'user' | 'group'
+  status?: 'online' | 'offline'
+  members?: Array<{ id: number; name: string }>
+}
+
 const activeTab = ref('chats')
-const selectedUser = ref(null)
+const selectedUser = ref<User | null>(null)
 const isOpen = ref(false)
 const isExpanded = ref(false)
 
@@ -12,7 +20,7 @@ const toggleChat = () => {
   isOpen.value = !isOpen.value
 }
 
-const selectUser = (user: any) => {
+const selectUser = (user: User) => {
   selectedUser.value = user
 }
 
@@ -44,10 +52,12 @@ const handleExpand = (expanded: boolean) => {
       </div>
 
       <div class="content" :class="{ 'expanded-layout': isExpanded }">
-        <div class="sidebar" v-if="isExpanded || (!isExpanded && activeTab === 'chats')">
+        <!-- Always show sidebar in chats tab -->
+        <div class="sidebar" v-show="isExpanded || activeTab === 'chats'">
           <UserList @select-user="selectUser" :selected-user="selectedUser" />
         </div>
 
+        <!-- Show chat area in expanded mode or when there's active chat -->
         <div class="chat-area" v-if="isExpanded || selectedUser || activeTab === 'ai'">
           <ChatInterface
             v-if="activeTab === 'ai'"
@@ -58,7 +68,7 @@ const handleExpand = (expanded: boolean) => {
             :is-full-screen="isExpanded"
           />
           <ChatInterface
-            v-else-if="selectedUser"
+            v-if="selectedUser && (isExpanded || activeTab === 'chats')"
             :user="selectedUser"
             :is-ai="false"
             @close="closeChat"
@@ -210,6 +220,12 @@ const handleExpand = (expanded: boolean) => {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    background-color: var(--secondary-color);
+  }
+
+  .chat-area {
+    flex: 1;
+    display: flex;
   }
 }
 
