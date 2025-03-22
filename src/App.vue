@@ -1,5 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import ChatWindow from './components/ChatWindow.vue'
+</script>
 
-<template>mahesh is here</template>
-
-<style scoped></style>
+<template>
+  <div>
+    <ChatWindow />
+  </div>
+</template>
