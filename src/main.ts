@@ -16,7 +16,6 @@ import {
   faCompress,
   faTimes,
   faEllipsisV,
-  faSearch,
 } from '@fortawesome/free-solid-svg-icons'
 
 import App from './App.vue'
@@ -34,7 +33,6 @@ library.add(
   faCompress,
   faTimes,
   faEllipsisV,
-  faSearch,
 )
 
 const app = createApp(App)

@@ -174,35 +174,21 @@ const handleExpand = (expanded: boolean) => {
 .content {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &.expanded-layout {
     display: flex;
-    height: 100vh;
+    flex-direction: row;
+    height: 100%;
 
     .sidebar {
       width: 300px;
       border-right: 1px solid #eee;
       height: 100%;
       background-color: var(--secondary-color);
-      overflow-y: auto;
-      padding: 0;
-
-      &::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 3px;
-      }
-
-      &::-webkit-scrollbar-thumb:hover {
-        background: #555;
-      }
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
     .chat-area {
@@ -217,6 +203,13 @@ const handleExpand = (expanded: boolean) => {
         box-shadow: none;
       }
     }
+  }
+
+  .sidebar {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 }
 

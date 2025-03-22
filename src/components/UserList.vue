@@ -112,12 +112,18 @@ const selectChat = (chat: User) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* This is crucial for Firefox */
+  overflow: hidden;
+  min-height: 0; /* Crucial for Firefox */
 }
 
 .search-container {
   padding: 10px;
   border-bottom: 1px solid #eee;
+  flex-shrink: 0; /* Prevent search container from shrinking */
+  background-color: var(--secondary-color); /* Ensure consistent background */
+  position: relative; /* For shadow */
+  z-index: 1; /* Keep shadow above scrolling content */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
 }
 
 .search-input-wrapper {
@@ -154,7 +160,10 @@ const selectChat = (chat: User) => {
 .users-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px;
+  min-height: 0; /* Crucial for Firefox */
+  position: relative;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -189,10 +198,19 @@ const selectChat = (chat: User) => {
 
   &.selected {
     background-color: var(--primary-color);
+
+    .user-name,
+    .user-status {
+      color: white;
+    }
   }
 
   &.online .user-avatar {
     border: 2px solid #4caf50;
+  }
+
+  &:last-child {
+    margin-bottom: 0; /* Remove margin from last item */
   }
 }
 
@@ -215,14 +233,21 @@ const selectChat = (chat: User) => {
 
 .user-info {
   flex: 1;
+  min-width: 0; /* Prevent text overflow issues */
 }
 
 .user-name {
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-status {
   font-size: 0.8em;
   color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
