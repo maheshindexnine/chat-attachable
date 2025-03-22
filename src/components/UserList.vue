@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+
+interface User {
+  id: number
+  name: string
+  type: 'user' | 'group'
+  status?: 'online' | 'offline'
+  members?: Array<{ id: number; name: string }>
+}
 
 const props = defineProps<{
-  selectedUser: any
+  selectedUser: User | null
 }>()
 
 const emit = defineEmits(['select-user'])
 
 // Mock users and groups data
-const chats = ref([
+const chats = ref<User[]>([
   { id: 1, name: 'John Doe', type: 'user', status: 'online' },
   { id: 2, name: 'Jane Smith', type: 'user', status: 'offline' },
   { id: 3, name: 'Mike Johnson', type: 'user', status: 'online' },
@@ -31,34 +39,68 @@ const chats = ref([
       { id: 2, name: 'Jane Smith' },
     ],
   },
+  { id: 6, name: 'Mahesh Gaikwad', type: 'user', status: 'online' },
+  { id: 7, name: 'Kunal Sharma', type: 'user', status: 'online' },
 ])
 
-const selectChat = (chat: any) => {
+const searchQuery = ref('')
+
+const filteredChats = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return chats.value
+
+  return chats.value.filter((chat) => {
+    // Search in user/group name
+    if (chat.name.toLowerCase().includes(query)) return true
+
+    // Search in group members if it's a group
+    if (chat.type === 'group' && chat.members) {
+      return chat.members.some((member) => member.name.toLowerCase().includes(query))
+    }
+
+    return false
+  })
+})
+
+const selectChat = (chat: User) => {
   emit('select-user', chat)
 }
 </script>
 
 <template>
   <div class="user-list">
-    <div
-      v-for="chat in chats"
-      :key="chat.id"
-      class="user-item"
-      :class="{
-        selected: selectedUser?.id === chat.id,
-        online: chat.type === 'user' && chat.status === 'online',
-      }"
-      @click="selectChat(chat)"
-    >
-      <div class="user-avatar" :class="{ 'group-avatar': chat.type === 'group' }">
-        <font-awesome-icon v-if="chat.type === 'group'" icon="users" />
-        <template v-else>{{ chat.name[0] }}</template>
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <font-awesome-icon icon="search" class="search-icon" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search users and groups..."
+          class="search-input"
+        />
       </div>
-      <div class="user-info">
-        <div class="user-name">{{ chat.name }}</div>
-        <div class="user-status">
-          <template v-if="chat.type === 'user'">{{ chat.status }}</template>
-          <template v-else>{{ chat.members.length }} members</template>
+    </div>
+    <div class="users-container">
+      <div
+        v-for="chat in filteredChats"
+        :key="chat.id"
+        class="user-item"
+        :class="{
+          selected: selectedUser?.id === chat.id,
+          online: chat.type === 'user' && chat.status === 'online',
+        }"
+        @click="selectChat(chat)"
+      >
+        <div class="user-avatar" :class="{ 'group-avatar': chat.type === 'group' }">
+          <font-awesome-icon v-if="chat.type === 'group'" icon="users" />
+          <template v-else>{{ chat.name[0] }}</template>
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ chat.name }}</div>
+          <div class="user-status">
+            <template v-if="chat.type === 'user'">{{ chat.status }}</template>
+            <template v-else>{{ chat.members?.length || 0 }} members</template>
+          </div>
         </div>
       </div>
     </div>
@@ -68,6 +110,49 @@ const selectChat = (chat: any) => {
 <style scoped lang="scss">
 .user-list {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* This is crucial for Firefox */
+}
+
+.search-container {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.search-input-wrapper {
+  position: relative;
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 35px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: var(--primary-color);
+  }
+
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.users-container {
+  flex: 1;
   overflow-y: auto;
   padding: 10px;
 
