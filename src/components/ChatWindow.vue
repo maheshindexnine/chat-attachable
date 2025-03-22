@@ -13,7 +13,7 @@ interface User {
 
 const activeTab = ref('chats')
 const selectedUser = ref<User | null>(null)
-const isOpen = ref(false)
+const isOpen = ref(true)
 const isExpanded = ref(false)
 
 const toggleChat = () => {
@@ -53,24 +53,14 @@ const handleExpand = (expanded: boolean) => {
 
       <div class="content" :class="{ 'expanded-layout': isExpanded }">
         <!-- Always show sidebar in chats tab -->
-        <div class="sidebar" v-show="isExpanded || activeTab === 'chats'">
+        <div class="sidebar">
           <UserList @select-user="selectUser" :selected-user="selectedUser" />
         </div>
 
-        <!-- Show chat area in expanded mode or when there's active chat -->
-        <div class="chat-area" v-if="isExpanded || selectedUser || activeTab === 'ai'">
+        <!-- Show AI chat in main area -->
+        <div class="chat-area" v-if="activeTab === 'ai'">
           <ChatInterface
-            v-if="activeTab === 'ai'"
             :is-ai="true"
-            @close="closeChat"
-            @toggle-expand="handleExpand"
-            :is-expanded="isExpanded"
-            :is-full-screen="isExpanded"
-          />
-          <ChatInterface
-            v-if="selectedUser && (isExpanded || activeTab === 'chats')"
-            :user="selectedUser"
-            :is-ai="false"
             @close="closeChat"
             @toggle-expand="handleExpand"
             :is-expanded="isExpanded"
@@ -80,9 +70,9 @@ const handleExpand = (expanded: boolean) => {
       </div>
     </div>
 
-    <!-- User Chat Window (only shown in non-expanded mode) -->
+    <!-- User Chat Window (always shown when user is selected) -->
     <Transition name="slide">
-      <div v-if="selectedUser && !isExpanded" class="user-chat-window">
+      <div v-if="selectedUser" class="user-chat-window">
         <ChatInterface
           :user="selectedUser"
           :is-ai="false"
@@ -239,6 +229,7 @@ const handleExpand = (expanded: boolean) => {
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  z-index: 1000;
 }
 
 .slide-enter-active,
