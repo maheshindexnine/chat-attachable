@@ -91,43 +91,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import UserList from './UserList.vue'
-import type RecordRTC from 'recordrtc'
-import { onMounted } from 'vue'
-import { onUnmounted } from 'vue'
+import RecordRTC from 'recordrtc'
+import io, { Socket } from 'socket.io-client'
 import type { User } from './ChatWindow.vue'
+
+interface Message {
+  id: number
+  sender: string
+  type: 'text' | 'image' | 'video' | 'file'
+  text?: string
+  content?: string
+  fileName?: string
+}
+
 const props = defineProps<{
   isAi: boolean
-  user?: any
+  user?: User
   isFullScreen?: boolean
 }>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'toggle-expand'])
 
-const messages = ref([
+const messages = ref<Message[]>([
   { id: 1, text: 'Hello! How can I help you today?', sender: 'ai', type: 'text' },
 ])
 
 const newMessage = ref('')
-const isExpanded = ref(false)
-const chatInterface = ref<HTMLElement | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
 const isRecording = ref(false)
 const recorder = ref<RecordRTC | null>(null)
-const socket = ref<any>(null)
+const socket = ref<Socket | null>(null)
 const showGroupMembersModal = ref(false)
 const selectedUser = ref<User | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// Watch for changes in the user prop
+watch(
+  () => props.user,
+  (newUser) => {
+    selectedUser.value = newUser || null
+  },
+  { immediate: true },
+)
+
+const selectUser = (user: User) => {
+  selectedUser.value = user
+}
 
 // Socket.io connection
 onMounted(() => {
   socket.value = io('http://localhost:3000')
 
-  socket.value.on('message', (message: any) => {
+  socket.value.on('message', (message: Message) => {
     messages.value.push(message)
   })
-
-  selectedUser.value = props.user
 })
 
 onUnmounted(() => {
@@ -135,14 +153,10 @@ onUnmounted(() => {
   stopRecording()
 })
 
-const selectUser = (user: User) => {
-  selectedUser.value = user
-}
-
 const sendMessage = () => {
   if (!newMessage.value.trim()) return
 
-  const message = {
+  const message: Message = {
     id: Date.now(),
     text: newMessage.value,
     sender: 'user',
@@ -154,20 +168,17 @@ const sendMessage = () => {
 
   if (props.isAi) {
     setTimeout(() => {
-      messages.value.push({
+      const aiMessage: Message = {
         id: Date.now(),
         text: 'This is a simulated AI response.',
         sender: 'ai',
         type: 'text',
-      })
+      }
+      messages.value.push(aiMessage)
     }, 1000)
   }
 
   newMessage.value = ''
-}
-
-const toggleExpand = () => {
-  emit('toggle-expand', false)
 }
 
 const handleFileUpload = (event: Event) => {
@@ -178,11 +189,12 @@ const handleFileUpload = (event: Event) => {
   const reader = new FileReader()
 
   reader.onload = (e) => {
-    const message = {
+    const content = e.target?.result as string
+    const message: Message = {
       id: Date.now(),
       sender: 'user',
       type: file.type.startsWith('image/') ? 'image' : 'file',
-      content: e.target?.result,
+      content,
       fileName: file.name,
     }
 
@@ -219,7 +231,7 @@ const stopRecording = () => {
     const blob = recorder.value?.getBlob()
     if (!blob) return
 
-    const message = {
+    const message: Message = {
       id: Date.now(),
       sender: 'user',
       type: 'video',
@@ -236,6 +248,10 @@ const stopRecording = () => {
 
 const toggleGroupMembersModal = () => {
   showGroupMembersModal.value = !showGroupMembersModal.value
+}
+
+const toggleExpand = () => {
+  emit('toggle-expand', false)
 }
 </script>
 
