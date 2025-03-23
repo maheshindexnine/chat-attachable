@@ -14,7 +14,7 @@ export interface User {
 
 const activeTab = ref('chats')
 const selectedUser = ref<User | null>(null)
-const isOpen = ref(true)
+const isOpen = ref(false)
 const isExpanded = ref(false)
 
 const toggleChat = () => {

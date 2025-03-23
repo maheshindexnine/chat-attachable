@@ -63,6 +63,8 @@ const filteredChats = computed(() => {
 })
 
 const selectChat = (chat: User) => {
+  console.log('12o9jeoiniowjriowe')
+
   emit('select-user', chat)
 }
 </script>
