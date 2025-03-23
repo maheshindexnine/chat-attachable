@@ -43,36 +43,6 @@
         </div>
       </div>
       <div>
-        <!-- <div class="messages">
-          <div
-            v-for="message in chatStore.messages"
-            :key="message.id"
-            class="message"
-            :class="message.sender"
-          >
-            <template v-if="message.type === 'text'">
-              {{ message.text }}
-            </template>
-            <template v-else-if="message.type === 'image'">
-              <img
-                :src="message.content"
-                :alt="message.fileName || 'Shared image'"
-                class="message-image"
-              />
-            </template>
-            <template v-else-if="message.type === 'video'">
-              <video controls class="message-video">
-                <source :src="message.content" type="video/webm" />
-              </video>
-            </template>
-            <template v-else-if="message.type === 'file'">
-              <div class="file-message">
-                <font-awesome-icon icon="file" />
-                <span>{{ message.fileName }}</span>
-              </div>
-            </template>
-          </div>
-        </div> -->
         <div style="max-height: 85vh; overflow-y: auto">
           <MessageList
             ref="messageListRef"
