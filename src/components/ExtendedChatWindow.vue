@@ -1,9 +1,102 @@
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useElementSize } from '@vueuse/core'
-import RecordRTC from 'recordrtc'
-import io from 'socket.io-client'
+<template>
+  <div class="bg-green-100 min-h-screen flex">
+    <div class="w-1/6 bg-white">
+      <div class="bg-yellow-300 border-r-2 border-yellow-400" style="padding: 5px 0">
+        <h2 class="text-xl text-center font-bold" style="font-weight: 600">Mahesh Gaikwad</h2>
+        <p class="text-xs text-center text-green-600">( Online )</p>
+      </div>
+      <UserList @select-user="selectUser" :selected-user="selectedUser" />
+    </div>
+    <div class="w-5/6">
+      <div class="bg-yellow-300 flex justify-between" style="padding: 15px">
+        <div class="flex gap-3 items-center">
+          <div class="user-avatar" :class="{ 'group-avatar': selectedUser?.type === 'group' }">
+            <font-awesome-icon v-if="selectedUser?.type === 'group'" icon="users" />
+            <template v-else>{{ selectedUser?.name?.[0] }}</template>
+          </div>
+          <div class="user-info">
+            <span>{{ selectedUser?.name }}</span>
+            <button
+              v-if="selectedUser?.type === 'group' && !isFullScreen"
+              class="group-info-btn"
+              @click="toggleGroupMembersModal"
+            >
+              <font-awesome-icon icon="info-circle" />
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-5 items-center">
+          <button @click="toggleExpand" class="action-btn">
+            <font-awesome-icon icon="compress" />
+          </button>
+          <button @click="$emit('close')" class="action-btn">
+            <font-awesome-icon icon="xmark" />
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="messages">
+          <div
+            v-for="message in messages"
+            :key="message.id"
+            class="message"
+            :class="message.sender"
+          >
+            <template v-if="message.type === 'text'">
+              {{ message.text }}
+            </template>
+            <template v-else-if="message.type === 'image'">
+              <img
+                :src="message.content"
+                :alt="message.fileName || 'Shared image'"
+                class="message-image"
+              />
+            </template>
+            <template v-else-if="message.type === 'video'">
+              <video controls class="message-video">
+                <source :src="message.content" type="video/webm" />
+              </video>
+            </template>
+            <template v-else-if="message.type === 'file'">
+              <div class="file-message">
+                <font-awesome-icon icon="file" />
+                <span>{{ message.fileName }}</span>
+              </div>
+            </template>
+          </div>
+        </div>
 
+        <div class="message-input">
+          <div class="input-actions">
+            <button @click="fileInput?.click()" class="action-btn">
+              <font-awesome-icon icon="paperclip" />
+            </button>
+            <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
+              <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
+            </button>
+          </div>
+          <input
+            v-model="newMessage"
+            @keyup.enter="sendMessage"
+            placeholder="Type your message..."
+          />
+          <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
+          <button @click="sendMessage" class="send-btn">
+            <font-awesome-icon icon="paper-plane" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import UserList from './UserList.vue'
+import type RecordRTC from 'recordrtc'
+import { onMounted } from 'vue'
+import { onUnmounted } from 'vue'
+import type { User } from './ChatWindow.vue'
 const props = defineProps<{
   isAi: boolean
   user?: any
@@ -24,79 +117,7 @@ const isRecording = ref(false)
 const recorder = ref<RecordRTC | null>(null)
 const socket = ref<any>(null)
 const showGroupMembersModal = ref(false)
-
-const { width, height } = useElementSize(chatInterface)
-
-// Resize functionality
-let isResizing = false
-let currentResizer: string | null = null
-let originalWidth = 0
-let originalHeight = 0
-let originalX = 0
-let originalY = 0
-let originalLeft = 0
-let originalTop = 0
-
-const startResize = (e: MouseEvent, resizer: string) => {
-  if (!chatInterface.value) return
-  e.preventDefault()
-  e.stopPropagation()
-
-  isResizing = true
-  currentResizer = resizer
-  originalWidth = chatInterface.value.offsetWidth
-  originalHeight = chatInterface.value.offsetHeight
-  originalX = e.pageX
-  originalY = e.pageY
-  originalLeft = chatInterface.value.offsetLeft
-  originalTop = chatInterface.value.offsetTop
-
-  window.addEventListener('mousemove', resize)
-  window.addEventListener('mouseup', stopResize)
-}
-
-const resize = (e: MouseEvent) => {
-  if (!isResizing || !chatInterface.value) return
-
-  const dx = e.pageX - originalX
-  const dy = e.pageY - originalY
-
-  if (currentResizer?.includes('left')) {
-    const newWidth = originalWidth - dx
-    const newLeft = originalLeft + dx
-    if (newWidth > 300) {
-      chatInterface.value.style.width = `${newWidth}px`
-      chatInterface.value.style.left = `${newLeft}px`
-    }
-  }
-  if (currentResizer?.includes('right')) {
-    const newWidth = originalWidth + dx
-    if (newWidth > 300) {
-      chatInterface.value.style.width = `${newWidth}px`
-    }
-  }
-  if (currentResizer?.includes('top')) {
-    const newHeight = originalHeight - dy
-    const newTop = originalTop + dy
-    if (newHeight > 400) {
-      chatInterface.value.style.height = `${newHeight}px`
-      chatInterface.value.style.top = `${newTop}px`
-    }
-  }
-  if (currentResizer?.includes('bottom')) {
-    const newHeight = originalHeight + dy
-    if (newHeight > 400) {
-      chatInterface.value.style.height = `${newHeight}px`
-    }
-  }
-}
-
-const stopResize = () => {
-  isResizing = false
-  currentResizer = null
-  window.removeEventListener('mousemove', resize)
-  window.removeEventListener('mouseup', stopResize)
-}
+const selectedUser = ref<User | null>(null)
 
 // Socket.io connection
 onMounted(() => {
@@ -105,12 +126,18 @@ onMounted(() => {
   socket.value.on('message', (message: any) => {
     messages.value.push(message)
   })
+
+  selectedUser.value = props.user
 })
 
 onUnmounted(() => {
   socket.value?.disconnect()
   stopRecording()
 })
+
+const selectUser = (user: User) => {
+  selectedUser.value = user
+}
 
 const sendMessage = () => {
   if (!newMessage.value.trim()) return
@@ -140,8 +167,7 @@ const sendMessage = () => {
 }
 
 const toggleExpand = () => {
-  isExpanded.value = false
-  emit('toggle-expand', true)
+  emit('toggle-expand', false)
 }
 
 const handleFileUpload = (event: Event) => {
@@ -212,117 +238,6 @@ const toggleGroupMembersModal = () => {
   showGroupMembersModal.value = !showGroupMembersModal.value
 }
 </script>
-
-<template>
-  <div ref="chatInterface" class="chat-interface" :class="{ expanded: isExpanded }">
-    <div class="chat-header">
-      <div class="header-left">
-        <template v-if="isAi">
-          <font-awesome-icon icon="robot" />
-          <span>AI Assistant</span>
-        </template>
-        <template v-else>
-          <div class="user-avatar" :class="{ 'group-avatar': user?.type === 'group' }">
-            <font-awesome-icon v-if="user?.type === 'group'" icon="users" />
-            <template v-else>{{ user?.name?.[0] }}</template>
-          </div>
-          <div class="user-info">
-            <span>{{ user?.name }}</span>
-            <button
-              v-if="user?.type === 'group' && !false"
-              class="group-info-btn"
-              @click="toggleGroupMembersModal"
-            >
-              <font-awesome-icon icon="info-circle" />
-            </button>
-          </div>
-        </template>
-      </div>
-      <div class="header-actions">
-        <button @click="toggleExpand" class="action-btn">
-          <font-awesome-icon :icon="isExpanded ? 'compress' : 'expand'" />
-        </button>
-        <button @click="$emit('close')" class="action-btn">
-          <font-awesome-icon icon="xmark" />
-        </button>
-      </div>
-    </div>
-
-    <!-- Group Members Modal -->
-    <div v-if="showGroupMembersModal" class="modal-overlay" @click="toggleGroupMembersModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Group Members</h3>
-          <button @click="toggleGroupMembersModal" class="close-btn">
-            <font-awesome-icon icon="xmark" />
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="member-list">
-            <div v-for="member in user?.members" :key="member.id" class="member-item">
-              <div class="member-avatar">{{ member.name[0] }}</div>
-              <span>{{ member.name }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="messages">
-      <div v-for="message in messages" :key="message.id" class="message" :class="message.sender">
-        <template v-if="message.type === 'text'">
-          {{ message.text }}
-        </template>
-        <template v-else-if="message.type === 'image'">
-          <img
-            :src="message.content"
-            :alt="message.fileName || 'Shared image'"
-            class="message-image"
-          />
-        </template>
-        <template v-else-if="message.type === 'video'">
-          <video controls class="message-video">
-            <source :src="message.content" type="video/webm" />
-          </video>
-        </template>
-        <template v-else-if="message.type === 'file'">
-          <div class="file-message">
-            <font-awesome-icon icon="file" />
-            <span>{{ message.fileName }}</span>
-          </div>
-        </template>
-      </div>
-    </div>
-
-    <div class="message-input">
-      <div class="input-actions">
-        <button @click="fileInput?.click()" class="action-btn">
-          <font-awesome-icon icon="paperclip" />
-        </button>
-        <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
-          <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
-        </button>
-      </div>
-      <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." />
-      <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
-      <button @click="sendMessage" class="send-btn">
-        <font-awesome-icon icon="paper-plane" />
-      </button>
-    </div>
-
-    <!-- Resize handles -->
-    <div class="resize-handle resize-handle-left" @mousedown="(e) => startResize(e, 'left')"></div>
-    <div
-      class="resize-handle resize-handle-right"
-      @mousedown="(e) => startResize(e, 'right')"
-    ></div>
-    <div class="resize-handle resize-handle-top" @mousedown="(e) => startResize(e, 'top')"></div>
-    <div
-      class="resize-handle resize-handle-bottom"
-      @mousedown="(e) => startResize(e, 'bottom')"
-    ></div>
-  </div>
-</template>
 
 <style scoped lang="scss">
 .chat-interface {
@@ -553,6 +468,12 @@ const toggleGroupMembersModal = () => {
   background-color: var(--secondary-color);
   border-top: 1px solid #eee;
   align-items: center;
+  position: absolute;
+  bottom: 0;
+  width: 80%;
+  border-radius: 20px;
+  margin-left: 20px;
+  margin-bottom: 20px;
 
   .input-actions {
     display: flex;
@@ -647,6 +568,77 @@ const toggleGroupMembersModal = () => {
     width: 100%;
     height: 5px;
     cursor: s-resize;
+  }
+}
+
+.chat-header {
+  padding: 15px;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 500;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .group-info-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+
+    &.group-avatar {
+      background-color: #9c27b0;
+      color: white;
+    }
   }
 }
 </style>

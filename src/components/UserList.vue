@@ -109,7 +109,7 @@ const selectChat = (chat: User) => {
 
 <style scoped lang="scss">
 .user-list {
-  height: 100%;
+  height: 90%;
   display: flex;
   flex-direction: column;
   overflow: hidden;

@@ -2,8 +2,9 @@
 import { ref } from 'vue'
 import UserList from './UserList.vue'
 import ChatInterface from './ChatInterface.vue'
+import ExtendedChatWindow from './ExtendedChatWindow.vue'
 
-interface User {
+export interface User {
   id: number
   name: string
   type: 'user' | 'group'
@@ -34,15 +35,24 @@ const handleExpand = (expanded: boolean) => {
 </script>
 
 <template>
-  <div class="chat-container" :class="{ expanded: isExpanded }">
+  <div v-if="isExpanded">
+    <ExtendedChatWindow
+      :user="selectedUser"
+      :is-ai="false"
+      @close="closeChat"
+      @toggle-expand="handleExpand"
+      :is-expanded="isExpanded"
+    />
+  </div>
+  <div v-if="!isExpanded" class="chat-container" :class="{ expanded: false }">
     <!-- Chat Toggle Button -->
-    <button class="chat-toggle" @click="toggleChat" v-if="!isExpanded">
+    <button class="chat-toggle" @click="toggleChat" v-if="!false">
       <font-awesome-icon icon="comments" size="2x" />
     </button>
 
     <!-- Main Chat Window -->
-    <div class="chat-window" :class="{ 'is-open': isOpen || isExpanded }">
-      <div class="tabs" v-if="!isExpanded">
+    <div class="chat-window" :class="{ 'is-open': isOpen || false }">
+      <div class="tabs" v-if="!false">
         <button :class="{ active: activeTab === 'chats' }" @click="activeTab = 'chats'">
           <font-awesome-icon icon="users" /> All Chats
         </button>
@@ -51,7 +61,7 @@ const handleExpand = (expanded: boolean) => {
         </button>
       </div>
 
-      <div class="content" :class="{ 'expanded-layout': isExpanded }">
+      <div class="content" :class="{ 'expanded-layout': false }">
         <!-- Always show sidebar in chats tab -->
         <div class="sidebar">
           <UserList @select-user="selectUser" :selected-user="selectedUser" />
@@ -63,8 +73,8 @@ const handleExpand = (expanded: boolean) => {
             :is-ai="true"
             @close="closeChat"
             @toggle-expand="handleExpand"
-            :is-expanded="isExpanded"
-            :is-full-screen="isExpanded"
+            :is-expanded="false"
+            :is-full-screen="false"
           />
         </div>
       </div>
@@ -78,7 +88,7 @@ const handleExpand = (expanded: boolean) => {
           :is-ai="false"
           @close="closeChat"
           @toggle-expand="handleExpand"
-          :is-expanded="isExpanded"
+          :is-expanded="false"
         />
       </div>
     </Transition>
