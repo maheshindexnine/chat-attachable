@@ -73,13 +73,15 @@
             </template>
           </div>
         </div> -->
-        <MessageList
-          ref="messageListRef"
-          :messages="chatStore.messages"
-          :current-user="chatStore.user"
-          :is-loading="isLoadingMessages"
-          @load-more="loadMoreMessages"
-        />
+        <div style="max-height: 85vh; overflow-y: auto">
+          <MessageList
+            ref="messageListRef"
+            :messages="chatStore.messages"
+            :current-user="chatStore.user"
+            :is-loading="isLoadingMessages"
+            @load-more="loadMoreMessages"
+          />
+        </div>
         <div class="message-input">
           <div class="input-actions">
             <button @click="fileInput?.click()" class="action-btn">
