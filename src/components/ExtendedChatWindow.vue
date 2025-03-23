@@ -43,9 +43,9 @@
         </div>
       </div>
       <div>
-        <div class="messages">
+        <!-- <div class="messages">
           <div
-            v-for="message in messages"
+            v-for="message in chatStore.messages"
             :key="message.id"
             class="message"
             :class="message.sender"
@@ -72,8 +72,14 @@
               </div>
             </template>
           </div>
-        </div>
-
+        </div> -->
+        <MessageList
+          ref="messageListRef"
+          :messages="chatStore.messages"
+          :current-user="chatStore.user"
+          :is-loading="isLoadingMessages"
+          @load-more="loadMoreMessages"
+        />
         <div class="message-input">
           <div class="input-actions">
             <button @click="fileInput?.click()" class="action-btn">
@@ -120,9 +126,19 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import UserList from './UserList.vue'
+import MessageList from './MessageList.vue'
 import RecordRTC from 'recordrtc'
 import io, { Socket } from 'socket.io-client'
-import type { User } from './ChatWindow.vue'
+import type { User } from '../stores/chat'
+import { useChatStore } from '../stores/chat'
+
+interface LocalUser {
+  id: number
+  name: string
+  type: 'user' | 'group'
+  status?: 'online' | 'offline'
+  members?: Array<{ id: number; name: string }>
+}
 
 interface Message {
   id: number
@@ -135,11 +151,12 @@ interface Message {
 
 const props = defineProps<{
   isAi: boolean
-  user?: User
+  user?: LocalUser
   isFullScreen?: boolean
 }>()
 
 const emit = defineEmits(['close', 'toggle-expand'])
+const chatStore = useChatStore()
 
 const messages = ref<Message[]>([
   { id: 1, text: 'Hello! How can I help you today?', sender: 'ai', type: 'text' },
@@ -150,89 +167,130 @@ const isRecording = ref(false)
 const recorder = ref<RecordRTC | null>(null)
 const socket = ref<Socket | null>(null)
 const showGroupMembersModal = ref(false)
-const selectedUser = ref<User | null>(null)
+const selectedUser = ref<LocalUser | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const isLoadingMessages = ref(false)
+const hasMoreMessages = ref(true)
+const messageListRef = ref(null)
 
 // Watch for changes in the user prop
 watch(
   () => props.user,
   (newUser) => {
     selectedUser.value = newUser || null
+    if (newUser) {
+      const chatUser: User = {
+        _id: String(newUser.id),
+        username: newUser.name,
+      }
+      chatStore.setCurrentChat({ ...chatUser, type: 'user', _id: '67de6c9d11a16236da4deb08' })
+    }
   },
   { immediate: true },
 )
 
-const selectUser = (user: User) => {
+const selectUser = (user: LocalUser) => {
   selectedUser.value = user
+  const chatUser: User = {
+    _id: String(user.id),
+    username: user.name,
+  }
+  chatStore.setCurrentChat({ ...chatUser, type: 'user' })
 }
 
 // Socket.io connection
-onMounted(() => {
-  socket.value = io('http://localhost:3000')
+onMounted(async () => {
+  // socket.value = io('http://localhost:3000')
+  const isInitialized = await chatStore.initialize()
+  // socket.value.on('message', (message: Message) => {
+  //   messages.value.push(message)
+  // })
 
-  socket.value.on('message', (message: Message) => {
-    messages.value.push(message)
-  })
+  handleOnline()
 })
+
+const handleOnline = () => {
+  console.log('Browser is online')
+  chatStore.connectSocket()
+  if (chatStore.user) {
+  }
+}
 
 onUnmounted(() => {
   socket.value?.disconnect()
   stopRecording()
 })
 
-const sendMessage = () => {
-  if (!newMessage.value.trim()) return
+const loadMessages = async () => {
+  if (!chatStore.currentChat) return
 
-  const message: Message = {
-    id: Date.now(),
-    text: newMessage.value,
-    sender: 'user',
-    type: 'text',
+  isLoadingMessages.value = true
+  try {
+    const messages = await chatStore.fetchMessages({
+      chatId: chatStore.currentChat._id,
+      chatType: chatStore.currentChat.type,
+      skip: 0,
+      limit: 20,
+    })
+
+    hasMoreMessages.value = messages.length === 20
+    messagesPage.value = 1
+  } catch (error) {
+    console.error('Error loading messages:', error)
+  } finally {
+    isLoadingMessages.value = false
   }
-
-  messages.value.push(message)
-  socket.value?.emit('message', message)
-
-  if (props.isAi) {
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: Date.now(),
-        text: 'This is a simulated AI response.',
-        sender: 'ai',
-        type: 'text',
-      }
-      messages.value.push(aiMessage)
-    }, 1000)
-  }
-
-  newMessage.value = ''
 }
 
-const handleFileUpload = (event: Event) => {
+const loadMoreMessages = async () => {
+  if (!chatStore.currentChat || !hasMoreMessages.value || isLoadingMessages.value) return
+
+  isLoadingMessages.value = true
+  try {
+    const messages = await chatStore.fetchMessages({
+      chatId: chatStore.currentChat._id,
+      chatType: chatStore.currentChat.type,
+      skip: messagesPage.value * 20,
+      limit: 20,
+    })
+
+    hasMoreMessages.value = messages.length === 20
+    messagesPage.value++
+  } catch (error) {
+    console.error('Error loading more messages:', error)
+  } finally {
+    isLoadingMessages.value = false
+  }
+}
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || !selectedUser.value) return
+
+  try {
+    await chatStore.sendMessage({
+      content: newMessage.value,
+      receiverId: String(selectedUser.value.id),
+    })
+
+    newMessage.value = ''
+  } catch (error) {
+    console.error('Error sending message:', error)
+  }
+}
+
+const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (!target.files?.length) return
+  if (!target.files?.length || !selectedUser.value) return
 
   const file = target.files[0]
-  const reader = new FileReader()
-
-  reader.onload = (e) => {
-    const content = e.target?.result as string
-    const message: Message = {
-      id: Date.now(),
-      sender: 'user',
-      type: file.type.startsWith('image/') ? 'image' : 'file',
-      content,
-      fileName: file.name,
-    }
-
-    messages.value.push(message)
-    socket.value?.emit('message', message)
-  }
-
-  if (file.type.startsWith('image/')) {
-    reader.readAsDataURL(file)
-  } else {
-    reader.readAsText(file)
+  try {
+    await chatStore.sendMessage({
+      content: '',
+      receiverId: String(selectedUser.value.id),
+      attachment: file,
+    })
+  } catch (error) {
+    console.error('Error sending file:', error)
   }
 }
 
