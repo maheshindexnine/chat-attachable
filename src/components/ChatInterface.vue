@@ -228,17 +228,17 @@ const toggleGroupMembersModal = () => {
           </div>
           <div class="user-info">
             <span>{{ user?.name }}</span>
-            <button
-              v-if="user?.type === 'group' && !false"
-              class="group-info-btn"
-              @click="toggleGroupMembersModal"
-            >
-              <font-awesome-icon icon="info-circle" />
-            </button>
           </div>
         </template>
       </div>
       <div class="header-actions">
+        <button
+          v-if="user?.type === 'group' && !false"
+          class="group-info-btn"
+          @click="toggleGroupMembersModal"
+        >
+          <font-awesome-icon icon="users" />
+        </button>
         <button @click="toggleExpand" class="action-btn">
           <font-awesome-icon :icon="isExpanded ? 'compress' : 'expand'" />
         </button>
@@ -268,7 +268,7 @@ const toggleGroupMembersModal = () => {
       </div>
     </div>
 
-    <div class="messages">
+    <div class="messages bg-green-100">
       <div v-for="message in messages" :key="message.id" class="message" :class="message.sender">
         <template v-if="message.type === 'text'">
           {{ message.text }}
@@ -294,7 +294,7 @@ const toggleGroupMembersModal = () => {
       </div>
     </div>
 
-    <div class="message-input">
+    <div class="message-input bg-green-100">
       <div class="input-actions">
         <button @click="fileInput?.click()" class="action-btn">
           <font-awesome-icon icon="paperclip" />

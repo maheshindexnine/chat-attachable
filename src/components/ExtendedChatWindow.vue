@@ -16,20 +16,28 @@
           </div>
           <div class="user-info">
             <span>{{ selectedUser?.name }}</span>
-            <button
-              v-if="selectedUser?.type === 'group' && !isFullScreen"
-              class="group-info-btn"
-              @click="toggleGroupMembersModal"
-            >
-              <font-awesome-icon icon="info-circle" />
-            </button>
           </div>
         </div>
         <div class="flex gap-5 items-center">
+          <button
+            v-if="selectedUser?.type === 'group' && !false"
+            class="group-info-btn"
+            @click="toggleGroupMembersModal"
+          >
+            <font-awesome-icon icon="users" />
+          </button>
           <button @click="toggleExpand" class="action-btn">
             <font-awesome-icon icon="compress" />
           </button>
-          <button @click="$emit('close')" class="action-btn">
+          <button
+            @click="
+              () => {
+                toggleExpand()
+                $emit('close')
+              }
+            "
+            class="action-btn"
+          >
             <font-awesome-icon icon="xmark" />
           </button>
         </div>
@@ -84,6 +92,25 @@
           <button @click="sendMessage" class="send-btn">
             <font-awesome-icon icon="paper-plane" />
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Group Members Modal -->
+  <div v-if="showGroupMembersModal" class="modal-overlay" @click="toggleGroupMembersModal">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h3>Group Members</h3>
+        <button @click="toggleGroupMembersModal" class="close-btn">
+          <font-awesome-icon icon="xmark" />
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="member-list">
+          <div v-for="member in user?.members" :key="member.id" class="member-item">
+            <div class="member-avatar">{{ member.name[0] }}</div>
+            <span>{{ member.name }}</span>
+          </div>
         </div>
       </div>
     </div>

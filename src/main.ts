@@ -16,6 +16,7 @@ import {
   faCompress,
   faTimes,
   faEllipsisV,
+  faInfoCircle,
 } from '@fortawesome/free-solid-svg-icons'
 
 import App from './App.vue'
@@ -33,6 +34,7 @@ library.add(
   faCompress,
   faTimes,
   faEllipsisV,
+  faInfoCircle,
 )
 
 const app = createApp(App)
