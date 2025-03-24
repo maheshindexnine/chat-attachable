@@ -7,7 +7,7 @@ onMounted(() => {
     'user',
     JSON.stringify({
       username: 'sahil',
-      isOnline: false,
+      isOnline: true,
       lastSeen: null,
       _id: '67de6caa11a16236da4deb0d',
       createdAt: '2025-03-22T13:49:31.173Z',

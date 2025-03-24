@@ -122,31 +122,19 @@ onUnmounted(() => {
   stopRecording()
 })
 
-const sendMessage = () => {
-  if (!newMessage.value.trim()) return
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || !props.user) return
 
-  const message = {
-    id: Date.now(),
-    text: newMessage.value,
-    sender: 'user',
-    type: 'text',
+  try {
+    await chatStore.sendMessage({
+      content: newMessage.value,
+      receiverId: String(props.user._id),
+    })
+
+    newMessage.value = ''
+  } catch (error) {
+    console.error('Error sending message:', error)
   }
-
-  messages.value.push(message)
-  socket.value?.emit('message', message)
-
-  if (props.isAi) {
-    setTimeout(() => {
-      messages.value.push({
-        id: Date.now(),
-        text: 'This is a simulated AI response.',
-        sender: 'ai',
-        type: 'text',
-      })
-    }, 1000)
-  }
-
-  newMessage.value = ''
 }
 
 const toggleExpand = () => {
