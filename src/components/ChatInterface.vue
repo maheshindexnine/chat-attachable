@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import RecordRTC from 'recordrtc'
 import io from 'socket.io-client'
+import MessageList from './MessageList.vue'
+import { useChatStore } from '../stores/chat'
 
 const props = defineProps<{
   isAi: boolean
@@ -24,6 +26,10 @@ const isRecording = ref(false)
 const recorder = ref<RecordRTC | null>(null)
 const socket = ref<any>(null)
 const showGroupMembersModal = ref(false)
+const chatStore = useChatStore()
+const isLoadingMessages = ref(false)
+const hasMoreMessages = ref(true)
+const messageListRef = ref(null)
 
 const { width, height } = useElementSize(chatInterface)
 
@@ -99,13 +105,17 @@ const stopResize = () => {
 }
 
 // Socket.io connection
-onMounted(() => {
-  socket.value = io('http://localhost:3000')
-
-  socket.value.on('message', (message: any) => {
-    messages.value.push(message)
-  })
+onMounted(async () => {
+  const isInitialized = await chatStore.initialize()
+  handleOnline()
 })
+
+const handleOnline = () => {
+  console.log('Browser is online')
+  chatStore.connectSocket()
+  if (chatStore.user) {
+  }
+}
 
 onUnmounted(() => {
   socket.value?.disconnect()
@@ -211,6 +221,27 @@ const stopRecording = () => {
 const toggleGroupMembersModal = () => {
   showGroupMembersModal.value = !showGroupMembersModal.value
 }
+
+const loadMoreMessages = async () => {
+  if (!chatStore.currentChat || !hasMoreMessages.value || isLoadingMessages.value) return
+
+  isLoadingMessages.value = true
+  try {
+    const messages = await chatStore.fetchMessages({
+      chatId: chatStore.currentChat._id,
+      chatType: chatStore.currentChat.type,
+      skip: messagesPage.value * 20,
+      limit: 20,
+    })
+
+    hasMoreMessages.value = messages.length === 20
+    messagesPage.value++
+  } catch (error) {
+    console.error('Error loading more messages:', error)
+  } finally {
+    isLoadingMessages.value = false
+  }
+}
 </script>
 
 <template>
@@ -222,12 +253,12 @@ const toggleGroupMembersModal = () => {
           <span>AI Assistant</span>
         </template>
         <template v-else>
-          <div class="user-avatar" :class="{ 'group-avatar': user?.type === 'group' }">
+          <div class="user-avatar capitalize" :class="{ 'group-avatar': user?.type === 'group' }">
             <font-awesome-icon v-if="user?.type === 'group'" icon="users" />
-            <template v-else>{{ user?.name?.[0] }}</template>
+            <template v-else>{{ user?.username?.[0] }}</template>
           </div>
-          <div class="user-info">
-            <span>{{ user?.name }}</span>
+          <div class="user-info capitalize">
+            <span>{{ user?.username }}</span>
           </div>
         </template>
       </div>
@@ -269,29 +300,13 @@ const toggleGroupMembersModal = () => {
     </div>
 
     <div class="messages bg-green-100">
-      <div v-for="message in messages" :key="message.id" class="message" :class="message.sender">
-        <template v-if="message.type === 'text'">
-          {{ message.text }}
-        </template>
-        <template v-else-if="message.type === 'image'">
-          <img
-            :src="message.content"
-            :alt="message.fileName || 'Shared image'"
-            class="message-image"
-          />
-        </template>
-        <template v-else-if="message.type === 'video'">
-          <video controls class="message-video">
-            <source :src="message.content" type="video/webm" />
-          </video>
-        </template>
-        <template v-else-if="message.type === 'file'">
-          <div class="file-message">
-            <font-awesome-icon icon="file" />
-            <span>{{ message.fileName }}</span>
-          </div>
-        </template>
-      </div>
+      <MessageList
+        ref="messageListRef"
+        :messages="chatStore.messages"
+        :current-user="chatStore.user"
+        :is-loading="isLoadingMessages"
+        @load-more="loadMoreMessages"
+      />
     </div>
 
     <div class="message-input bg-green-100">

@@ -337,6 +337,24 @@ onUnmounted(() => {
   window.removeEventListener('screen-share', handleScreenShare)
 })
 
+const handleScreenShare = () => {
+  if (!messageListRef.value) return
+
+  // Check if a call is already active
+  if (messageListRef.value.callActive) {
+    // If a call is already active, just toggle screen sharing
+    messageListRef.value.toggleScreenShare()
+  } else {
+    // If no call is active, start a video call first and then share screen
+    messageListRef.value.startVideoCall(() => {
+      // This callback will be executed after the call is established
+      setTimeout(() => {
+        messageListRef.value.toggleScreenShare()
+      }, 2000) // Give some time for the call to fully connect
+    })
+  }
+}
+
 watch(
   () => props.messages.length,
   async (newLength, oldLength) => {

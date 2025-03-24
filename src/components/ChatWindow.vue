@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import UserList from './UserList.vue'
 import ChatInterface from './ChatInterface.vue'
 import ExtendedChatWindow from './ExtendedChatWindow.vue'
+import { useChatStore } from '@/stores/chat'
 
 export interface User {
   id: number
@@ -16,6 +17,7 @@ const activeTab = ref('chats')
 const selectedUser = ref<User | null>(null)
 const isOpen = ref(false)
 const isExpanded = ref(false)
+const chatStore = useChatStore()
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value
@@ -23,6 +25,7 @@ const toggleChat = () => {
 
 const selectUser = (user: User) => {
   selectedUser.value = user
+  chatStore.setCurrentChat({ ...user, type: 'user' })
 }
 
 const closeChat = () => {

@@ -10,12 +10,15 @@
     <div class="w-5/6">
       <div class="bg-yellow-300 flex justify-between" style="padding: 15px">
         <div class="flex gap-3 items-center">
-          <div class="user-avatar" :class="{ 'group-avatar': selectedUser?.type === 'group' }">
+          <div
+            class="user-avatar capitalize"
+            :class="{ 'group-avatar': selectedUser?.type === 'group' }"
+          >
             <font-awesome-icon v-if="selectedUser?.type === 'group'" icon="users" />
-            <template v-else>{{ selectedUser?.name?.[0] }}</template>
+            <template v-else>{{ selectedUser?.username?.[0] }}</template>
           </div>
           <div class="user-info">
-            <span>{{ selectedUser?.name }}</span>
+            <span class="capitalize">{{ selectedUser?.username }}</span>
           </div>
         </div>
         <div class="flex gap-5 items-center">
@@ -86,8 +89,8 @@
       <div class="modal-body">
         <div class="member-list">
           <div v-for="member in user?.members" :key="member.id" class="member-item">
-            <div class="member-avatar">{{ member.name[0] }}</div>
-            <span>{{ member.name }}</span>
+            <div class="member-avatar">{{ member?.username[0] }}</div>
+            <span>{{ member?.username }}</span>
           </div>
         </div>
       </div>
@@ -153,7 +156,7 @@ watch(
     if (newUser) {
       const chatUser: User = {
         _id: String(newUser.id),
-        username: newUser.name,
+        username: newUser?.username,
       }
       chatStore.setCurrentChat({ ...chatUser, type: 'user', _id: '67de6c9d11a16236da4deb08' })
     }
@@ -164,8 +167,8 @@ watch(
 const selectUser = (user: LocalUser) => {
   selectedUser.value = user
   const chatUser: User = {
-    _id: String(user.id),
-    username: user.name,
+    _id: String(user?._id),
+    username: user?.username,
   }
   chatStore.setCurrentChat({ ...chatUser, type: 'user' })
 }

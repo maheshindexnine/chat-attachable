@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useChatStore } from '../stores/chat'
+import { onMounted } from 'vue'
 
 interface User {
   id: number
@@ -12,6 +14,8 @@ interface User {
 const props = defineProps<{
   selectedUser: User | null
 }>()
+
+const chatStore = useChatStore()
 
 const emit = defineEmits(['select-user'])
 
@@ -63,10 +67,12 @@ const filteredChats = computed(() => {
 })
 
 const selectChat = (chat: User) => {
-  console.log('12o9jeoiniowjriowe')
-
   emit('select-user', chat)
 }
+
+onMounted(async () => {
+  await chatStore.fetchUsers()
+})
 </script>
 
 <template>
@@ -84,25 +90,27 @@ const selectChat = (chat: User) => {
     </div>
     <div class="users-container">
       <div
-        v-for="chat in filteredChats"
+        v-for="chat in chatStore.users"
         :key="chat.id"
         class="user-item"
         :class="{
-          selected: selectedUser?.id === chat.id,
-          online: chat.type === 'user' && chat.status === 'online',
+          selected: selectedUser?._id === chat._id,
+          online: chat?.isOnline,
         }"
         @click="selectChat(chat)"
       >
-        <div class="user-avatar" :class="{ 'group-avatar': chat.type === 'group' }">
-          <font-awesome-icon v-if="chat.type === 'group'" icon="users" />
-          <template v-else>{{ chat.name[0] }}</template>
+        <!-- online: chat.type === 'user' && chat.status === 'online', -->
+        <div class="user-avatar capitalize" :class="{ 'group-avatar': chat?.type === 'group' }">
+          <font-awesome-icon v-if="chat?.type === 'group'" icon="users" />
+          <template v-else>{{ chat.username[0] }}</template>
+          <template>{{ chat?.username[0] }}</template>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ chat.name }}</div>
-          <div class="user-status">
+          <div class="user-name capitalize">{{ chat.username }}</div>
+          <!-- <div class="user-status">
             <template v-if="chat.type === 'user'">{{ chat.status }}</template>
             <template v-else>{{ chat.members?.length || 0 }} members</template>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
