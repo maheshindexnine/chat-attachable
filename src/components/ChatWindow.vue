@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import UserList from './UserList.vue'
 import ChatInterface from './ChatInterface.vue'
 import ExtendedChatWindow from './ExtendedChatWindow.vue'
@@ -30,6 +30,19 @@ const selectUser = (user: User) => {
 
 const closeChat = () => {
   selectedUser.value = null
+}
+
+// Socket.io connection
+onMounted(async () => {
+  const isInitialized = await chatStore.initialize()
+  handleOnline()
+})
+
+const handleOnline = () => {
+  console.log('Browser is online')
+  chatStore.connectSocket()
+  if (chatStore.user) {
+  }
 }
 
 const handleExpand = (expanded: boolean) => {

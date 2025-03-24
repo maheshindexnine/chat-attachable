@@ -63,6 +63,7 @@
             @load-more="loadMoreMessages"
           />
         </div>
+
         <div class="message-input">
           <div class="input-actions">
             <button @click="fileInput?.click()" class="action-btn">
@@ -166,7 +167,7 @@ watch(
         _id: String(newUser.id),
         username: newUser?.username,
       }
-      chatStore.setCurrentChat({ ...chatUser, type: 'user', _id: '67de6c9d11a16236da4deb08' })
+      chatStore.setCurrentChat({ ...chatUser, type: 'user' })
     }
   },
   { immediate: true },
@@ -252,7 +253,7 @@ const sendMessage = async () => {
   try {
     await chatStore.sendMessage({
       content: newMessage.value,
-      receiverId: String(selectedUser.value.id),
+      receiverId: String(selectedUser.value._id),
     })
 
     newMessage.value = ''

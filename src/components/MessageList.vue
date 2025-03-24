@@ -5,7 +5,6 @@
     <div v-if="isLoading && messages.length === 0" class="loading-indicator">
       Loading messages...
     </div>
-
     <div
       v-for="(message, index) in displayMessages"
       :key="message._id"

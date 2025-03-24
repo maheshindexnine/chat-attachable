@@ -298,7 +298,7 @@ export const useChatStore = defineStore('chat', {
           if (
             this.currentChat &&
             ((this.currentChat.type === 'user' &&
-              (message.sender === this.currentChat._id ||
+              (message.sender?._id === this.currentChat._id ||
                 message.receiver === this.currentChat._id)) ||
               (this.currentChat.type === 'group' && message.groupId === this.currentChat._id))
           ) {
@@ -360,19 +360,13 @@ export const useChatStore = defineStore('chat', {
       attachment,
     }: SendMessageParams): Promise<void> {
       try {
-        console.log(content, ' contentcontent')
-        console.log('0 messageData')
         let messageData: Partial<Message> & { content: string } = {
           content,
-          //   sender: this.user?._id as string,
-          sender: '67de6c9d11a16236da4deb08',
+          sender: this.user?._id as string,
         }
 
-        console.log('1 messageData')
-
         if (receiverId) {
-          //   messageData.receiver = receiverId
-          messageData.receiver = '67de6caa11a16236da4deb0d'
+          messageData.receiver = receiverId
         } else if (groupId) {
           messageData.groupId = groupId
         }
