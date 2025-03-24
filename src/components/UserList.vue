@@ -4,65 +4,30 @@ import { useChatStore } from '../stores/chat'
 import { onMounted } from 'vue'
 
 interface User {
-  id: number
-  name: string
-  type: 'user' | 'group'
-  status?: 'online' | 'offline'
-  members?: Array<{ id: number; name: string }>
+  _id: string
+  username: string
+  isOnline?: boolean
+  lastSeen?: string | null
+  createdAt?: string
+  updatedAt?: string
 }
 
 const props = defineProps<{
   selectedUser: User | null
 }>()
 
-const chatStore = useChatStore()
-
 const emit = defineEmits(['select-user'])
 
-// Mock users and groups data
-const chats = ref<User[]>([
-  { id: 1, name: 'John Doe', type: 'user', status: 'online' },
-  { id: 2, name: 'Jane Smith', type: 'user', status: 'offline' },
-  { id: 3, name: 'Mike Johnson', type: 'user', status: 'online' },
-  {
-    id: 4,
-    name: 'Project Team',
-    type: 'group',
-    members: [
-      { id: 1, name: 'John Doe' },
-      { id: 2, name: 'Jane Smith' },
-      { id: 3, name: 'Mike Johnson' },
-    ],
-  },
-  {
-    id: 5,
-    name: 'Marketing Team',
-    type: 'group',
-    members: [
-      { id: 1, name: 'John Doe' },
-      { id: 2, name: 'Jane Smith' },
-    ],
-  },
-  { id: 6, name: 'Mahesh Gaikwad', type: 'user', status: 'online' },
-  { id: 7, name: 'Kunal Sharma', type: 'user', status: 'online' },
-])
+const chatStore = useChatStore()
 
 const searchQuery = ref('')
 
 const filteredChats = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
-  if (!query) return chats.value
+  if (!query) return chatStore.users
 
-  return chats.value.filter((chat) => {
-    // Search in user/group name
-    if (chat.name.toLowerCase().includes(query)) return true
-
-    // Search in group members if it's a group
-    if (chat.type === 'group' && chat.members) {
-      return chat.members.some((member) => member.name.toLowerCase().includes(query))
-    }
-
-    return false
+  return chatStore.users.filter((chat) => {
+    return chat.username.toLowerCase().includes(query)
   })
 })
 
@@ -90,8 +55,8 @@ onMounted(async () => {
     </div>
     <div class="users-container">
       <div
-        v-for="chat in chatStore.users"
-        :key="chat.id"
+        v-for="chat in filteredChats"
+        :key="chat._id"
         class="user-item"
         :class="{
           selected: selectedUser?._id === chat._id,
