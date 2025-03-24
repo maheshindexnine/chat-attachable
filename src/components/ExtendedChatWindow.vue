@@ -1,9 +1,17 @@
 <template>
   <div class="bg-green-100 min-h-screen flex">
     <div class="w-1/6 bg-white">
-      <div class="bg-yellow-300 border-r-2 border-yellow-400" style="padding: 5px 0">
-        <h2 class="text-xl text-center font-bold" style="font-weight: 600">Mahesh Gaikwad</h2>
-        <p class="text-xs text-center text-green-600">( Online )</p>
+      <div class="bg-yellow-300 border-r-2 border-yellow-400 flex gap-5" style="padding: 5px 20px">
+        <div class="capitalize bg-white text-3xl rounded-full w-12 h-fit text-center">
+          {{ chatStore.user?.username[0] }}
+        </div>
+        <div>
+          <h2 class="text-2xl text-center font-bold" style="font-weight: 600">
+            {{ chatStore.user?.username }}
+          </h2>
+          <p v-if="chatStore.user?.isOnline" class="text-xs text-center text-green-600">Online</p>
+          <p v-if="!chatStore.user?.isOnline" class="text-xs text-center text-red-600">Offline</p>
+        </div>
       </div>
       <UserList @select-user="selectUser" :selected-user="selectedUser" />
     </div>
