@@ -1,25 +1,29 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import ChatWindow from './components/ChatWindow.vue'
+import { ref } from 'vue'
+import { useChatStore } from './stores/chat'
 
-onMounted(() => {
-  localStorage.setItem(
-    'user',
-    JSON.stringify({
-      username: 'sahil',
-      isOnline: true,
-      lastSeen: null,
-      _id: '67de6caa11a16236da4deb0d',
-      createdAt: '2025-03-22T13:49:31.173Z',
-      updatedAt: '2025-03-22T13:49:31.173Z',
-      __v: 0,
-    }),
-  )
-})
+const username = ref('')
+const chatStore = useChatStore()
+const loginUser = () => {
+  if (username.value !== '') {
+    chatStore.login(username.value)
+  } else {
+    alert('Username field is empty')
+  }
+}
 </script>
 
 <template>
   <div>
+    <!-- Tempary code start -->
+    <div v-if="!chatStore.user">
+      <input type="text" class="border-2" v-model="username" />
+      <button @click="loginUser">Login</button>
+    </div>
+    <div v-else>User Name - {{ chatStore.user.username }}</div>
+    <!-- Tempary code end -->
+
     <ChatWindow />
   </div>
 </template>

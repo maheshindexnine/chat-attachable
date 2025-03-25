@@ -67,15 +67,7 @@ interface SendMessageParams {
 
 export const useChatStore = defineStore('chat', {
   state: (): ChatState => ({
-    user: {
-      _id: '67de6caa11a16236da4deb0d',
-      username: 'mahesh',
-      isOnline: false,
-      lastSeen: null,
-      createdAt: '2025-03-22T13:49:31.173Z',
-      updatedAt: '2025-03-22T13:49:31.173Z',
-    },
-
+    user: null,
     users: [],
     groups: [],
     currentChat: null,
@@ -483,6 +475,10 @@ export const useChatStore = defineStore('chat', {
       if (socket?.connected) {
         socket.disconnect()
       }
+    },
+
+    resetCurrentChat() {
+      this.currentChat = null
     },
 
     getSocket(): Socket | null {

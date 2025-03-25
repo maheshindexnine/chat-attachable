@@ -29,6 +29,8 @@ const selectUser = (user: User) => {
 }
 
 const closeChat = () => {
+  sessionStorage.removeItem('currentChat')
+  chatStore.resetCurrentChat()
   selectedUser.value = null
 }
 
