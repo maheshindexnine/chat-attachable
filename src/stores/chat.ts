@@ -132,6 +132,11 @@ export const useChatStore = defineStore('chat', {
       return false
     },
 
+    getUnreadCount(chatId: string, isGroup: string) {
+      const key = isGroup ? `group:${chatId}` : `user:${chatId}`
+      return this.unreadMessages[chatId] || 0
+    },
+
     async login(username: string): Promise<User> {
       try {
         if (!username?.trim()) {

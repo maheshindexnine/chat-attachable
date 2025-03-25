@@ -35,6 +35,10 @@ const selectChat = (chat: User) => {
   emit('select-user', chat)
 }
 
+const getUnreadCount = (chatId: string, isGroup: string) => {
+  return chatStore.getUnreadCount(chatId, isGroup)
+}
+
 onMounted(async () => {
   await chatStore.fetchUsers()
 })
@@ -64,18 +68,30 @@ onMounted(async () => {
         }"
         @click="selectChat(chat)"
       >
-        <!-- online: chat.type === 'user' && chat.status === 'online', -->
-        <div class="user-avatar capitalize" :class="{ 'group-avatar': chat?.type === 'group' }">
+        <div
+          class="user-avatar capitalize"
+          :class="{
+            'group-avatar': chat?.type === 'group',
+            online: chat.type === 'user' && chat.isOnline,
+          }"
+        >
           <font-awesome-icon v-if="chat?.type === 'group'" icon="users" />
           <template v-else>{{ chat.username[0] }}</template>
           <template>{{ chat?.username[0] }}</template>
         </div>
         <div class="user-info">
           <div class="user-name capitalize">{{ chat.username }}</div>
-          <!-- <div class="user-status">
-            <template v-if="chat.type === 'user'">{{ chat.status }}</template>
-            <template v-else>{{ chat.members?.length || 0 }} members</template>
-          </div> -->
+          <div class="user-status">
+            <template v-if="chat?.type === 'user'">{{ chat.status }}</template>
+            <!-- <template v-else>{{ chat.members?.length || 0 }} members</template> -->
+          </div>
+        </div>
+        <div
+          v-if="getUnreadCount(chat._id, false) > 0"
+          class="text-xs bg-green-400 rounded-full"
+          style="padding: 5px"
+        >
+          {{ getUnreadCount(chat._id, false) }}
         </div>
       </div>
     </div>

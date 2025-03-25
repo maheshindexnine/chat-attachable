@@ -241,12 +241,19 @@ const loadMoreMessages = async () => {
           <span>AI Assistant</span>
         </template>
         <template v-else>
-          <div class="user-avatar capitalize" :class="{ 'group-avatar': user?.type === 'group' }">
+          <div
+            class="user-avatar capitalize"
+            :class="{
+              'group-avatar': user?.type === 'group',
+              online: user.type === 'user' && user.isOnline,
+            }"
+          >
             <font-awesome-icon v-if="user?.type === 'group'" icon="users" />
             <template v-else>{{ user?.username?.[0] }}</template>
           </div>
           <div class="user-info capitalize">
-            <span>{{ user?.username }}</span>
+            <span>{{ user?.username }}</span
+            ><br />
           </div>
         </template>
       </div>
@@ -418,6 +425,10 @@ const loadMoreMessages = async () => {
     &.group-avatar {
       background-color: #9c27b0;
       color: white;
+    }
+
+    &.online {
+      border: 2px solid #4caf50;
     }
   }
 }
