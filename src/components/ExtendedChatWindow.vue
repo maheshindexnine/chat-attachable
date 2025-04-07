@@ -51,7 +51,7 @@
         </div>
       </div>
       <div>
-        <div style="max-height: 85vh; overflow-y: auto">
+        <div style="max-height: 80vh; overflow-y: auto">
           <MessageList
             ref="messageListRef"
             :messages="chatStore.messages"
@@ -62,23 +62,35 @@
         </div>
 
         <div class="message-input">
-          <div class="input-actions">
-            <button @click="fileInput?.click()" class="action-btn">
-              <font-awesome-icon icon="paperclip" />
-            </button>
-            <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
-              <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
+          <div
+            v-if="selectedFile"
+            class="flex justify-between items-center bg-gray-200"
+            style="padding: 10px; margin-bottom: 10px; border-radius: 10px"
+          >
+            <div class="text-gray-700">Selected file: {{ selectedFile.name }}</div>
+            <button @click="clearSelectedFile" class="text-gray-500 hover:text-gray-700">
+              <font-awesome-icon icon="xmark" />
             </button>
           </div>
-          <input
-            v-model="newMessage"
-            @keyup.enter="sendMessage"
-            placeholder="Type your message..."
-          />
-          <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
-          <button @click="sendMessage" class="send-btn">
-            <font-awesome-icon icon="paper-plane" />
-          </button>
+          <div class="flex w-full gap-5">
+            <div class="input-actions">
+              <button @click="fileInput?.click()" class="action-btn">
+                <font-awesome-icon icon="paperclip" />
+              </button>
+              <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
+                <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
+              </button>
+            </div>
+            <input
+              v-model="newMessage"
+              @keyup.enter="sendMessage"
+              placeholder="Type your message..."
+            />
+            <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
+            <button @click="sendMessage" class="send-btn">
+              <font-awesome-icon icon="paper-plane" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -109,8 +121,6 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import UserList from './UserList.vue'
 import MessageList from './MessageList.vue'
 import RecordRTC from 'recordrtc'
-import io, { Socket } from 'socket.io-client'
-import type { User } from '../stores/chat'
 import { useChatStore } from '../stores/chat'
 
 interface LocalUser {
@@ -150,8 +160,11 @@ const socket = ref<Socket | null>(null)
 const showGroupMembersModal = ref(false)
 const selectedUser = ref<LocalUser | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const selectedFile = ref<File | null>(null)
+const isFileSelected = ref(false)
 const isLoadingMessages = ref(false)
 const hasMoreMessages = ref(true)
+const messagesPage = ref(1)
 const messageListRef = ref(null)
 
 // Watch for changes in the user prop
@@ -264,14 +277,26 @@ const handleFileUpload = async (event: Event) => {
   if (!target.files?.length || !selectedUser.value) return
 
   const file = target.files[0]
+  selectedFile.value = file
+  isFileSelected.value = true
+
   try {
     await chatStore.sendMessage({
       content: '',
       receiverId: String(selectedUser.value.id),
       attachment: file,
     })
+    clearSelectedFile()
   } catch (error) {
     console.error('Error sending file:', error)
+  }
+}
+
+const clearSelectedFile = () => {
+  selectedFile.value = null
+  isFileSelected.value = false
+  if (fileInput.value) {
+    fileInput.value.value = ''
   }
 }
 
@@ -297,10 +322,10 @@ const stopRecording = () => {
     const blob = recorder.value?.getBlob()
     if (!blob) return
 
-    const message: Message = {
+    const message = {
       id: Date.now(),
       sender: 'user',
-      type: 'video',
+      type: 'video' as const,
       content: URL.createObjectURL(blob),
     }
 
@@ -545,8 +570,6 @@ const toggleExpand = () => {
 
 .message-input {
   padding: 15px;
-  display: flex;
-  gap: 10px;
   background-color: var(--secondary-color);
   border-top: 1px solid #eee;
   align-items: center;
