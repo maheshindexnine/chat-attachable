@@ -30,6 +30,8 @@ const chatStore = useChatStore()
 const isLoadingMessages = ref(false)
 const hasMoreMessages = ref(true)
 const messageListRef = ref(null)
+const selectedFile = ref<File | null>(null)
+const isFileSelected = ref(false)
 
 const { width, height } = useElementSize(chatInterface)
 
@@ -132,6 +134,7 @@ const sendMessage = async () => {
     })
 
     newMessage.value = ''
+    clearSelectedFile()
   } catch (error) {
     console.error('Error sending message:', error)
   }
@@ -142,30 +145,24 @@ const toggleExpand = () => {
   emit('toggle-expand', true)
 }
 
-const handleFileUpload = (event: Event) => {
+const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement
   if (!target.files?.length) return
 
   const file = target.files[0]
-  const reader = new FileReader()
+  selectedFile.value = file
+  isFileSelected.value = true
 
-  reader.onload = (e) => {
-    const message = {
-      id: Date.now(),
-      sender: 'user',
-      type: file.type.startsWith('image/') ? 'image' : 'file',
-      content: e.target?.result,
-      fileName: file.name,
-    }
-
-    messages.value.push(message)
-    socket.value?.emit('message', message)
-  }
-
-  if (file.type.startsWith('image/')) {
-    reader.readAsDataURL(file)
-  } else {
-    reader.readAsText(file)
+  try {
+    await chatStore.sendMessage({
+      content: '',
+      // receiverId: String(selectedUser.value.id),
+      receiverId: String('asdasdasd'),
+      attachment: file,
+    })
+    clearSelectedFile()
+  } catch (error) {
+    console.error('Error sending file:', error)
   }
 }
 
@@ -228,6 +225,14 @@ const loadMoreMessages = async () => {
     console.error('Error loading more messages:', error)
   } finally {
     isLoadingMessages.value = false
+  }
+}
+
+const clearSelectedFile = () => {
+  selectedFile.value = null
+  isFileSelected.value = false
+  if (fileInput.value) {
+    fileInput.value.value = ''
   }
 }
 </script>
@@ -305,19 +310,31 @@ const loadMoreMessages = async () => {
     </div>
 
     <div class="message-input bg-green-100">
-      <div class="input-actions">
-        <button @click="fileInput?.click()" class="action-btn">
-          <font-awesome-icon icon="paperclip" />
-        </button>
-        <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
-          <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
+      <div
+        v-if="selectedFile"
+        class="flex justify-between items-center bg-gray-200"
+        style="padding: 10px; margin-bottom: 10px; border-radius: 10px"
+      >
+        <div class="text-gray-700">Selected file: {{ selectedFile.name }}</div>
+        <button @click="clearSelectedFile" class="text-gray-500 hover:text-gray-700">
+          <font-awesome-icon icon="xmark" />
         </button>
       </div>
-      <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." />
-      <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
-      <button @click="sendMessage" class="send-btn">
-        <font-awesome-icon icon="paper-plane" />
-      </button>
+      <div class="flex w-full gap-5">
+        <div class="input-actions">
+          <button @click="fileInput?.click()" class="action-btn">
+            <font-awesome-icon icon="paperclip" />
+          </button>
+          <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
+            <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
+          </button>
+        </div>
+        <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." />
+        <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
+        <button @click="sendMessage" class="send-btn">
+          <font-awesome-icon icon="paper-plane" />
+        </button>
+      </div>
     </div>
 
     <!-- Resize handles -->
@@ -562,8 +579,6 @@ const loadMoreMessages = async () => {
 
 .message-input {
   padding: 15px;
-  display: flex;
-  gap: 10px;
   background-color: var(--secondary-color);
   border-top: 1px solid #eee;
   align-items: center;
