@@ -1,3 +1,117 @@
+<template>
+  <div ref="chatInterface" class="chat-interface" :class="{ expanded: isExpanded }">
+    <div class="chat-header">
+      <div class="header-left">
+        <template v-if="isAi">
+          <font-awesome-icon icon="robot" />
+          <span>AI Assistant</span>
+        </template>
+        <template v-else>
+          <div
+            class="user-avatar capitalize"
+            :class="{
+              'group-avatar': user?.type === 'group',
+              online: user.type === 'user' && user.isOnline,
+            }"
+          >
+            <font-awesome-icon v-if="user?.type === 'group'" icon="users" />
+            <template v-else>{{ user?.username?.[0] }}</template>
+          </div>
+          <div class="user-info capitalize">
+            <span>{{ user?.username }}</span
+            ><br />
+          </div>
+        </template>
+      </div>
+      <div class="header-actions">
+        <button
+          v-if="user?.type === 'group' && !false"
+          class="group-info-btn"
+          @click="toggleGroupMembersModal"
+        >
+          <font-awesome-icon icon="users" />
+        </button>
+        <button @click="toggleExpand" class="action-btn">
+          <font-awesome-icon :icon="isExpanded ? 'compress' : 'expand'" />
+        </button>
+        <button @click="$emit('close')" class="action-btn">
+          <font-awesome-icon icon="xmark" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Group Members Modal -->
+    <div v-if="showGroupMembersModal" class="modal-overlay" @click="toggleGroupMembersModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Group Members</h3>
+          <button @click="toggleGroupMembersModal" class="close-btn">
+            <font-awesome-icon icon="xmark" />
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="member-list">
+            <div v-for="member in user?.members" :key="member.id" class="member-item">
+              <div class="member-avatar">{{ member.name[0] }}</div>
+              <span>{{ member.name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="messages bg-green-100">
+      <MessageList
+        ref="messageListRef"
+        :messages="chatStore.messages"
+        :current-user="chatStore.user"
+        :is-loading="isLoadingMessages"
+        @load-more="loadMoreMessages"
+      />
+    </div>
+
+    <div class="message-input bg-green-100">
+      <div
+        v-if="selectedFile"
+        class="flex justify-between items-center bg-gray-200"
+        style="padding: 10px; margin-bottom: 10px; border-radius: 10px"
+      >
+        <div class="text-gray-700">Selected file: {{ selectedFile.name }}</div>
+        <button @click="clearSelectedFile" class="text-gray-500 hover:text-gray-700">
+          <font-awesome-icon icon="xmark" />
+        </button>
+      </div>
+      <div class="flex w-full gap-5">
+        <div class="input-actions">
+          <button @click="fileInput?.click()" class="action-btn">
+            <font-awesome-icon icon="paperclip" />
+          </button>
+          <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
+            <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
+          </button>
+        </div>
+        <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." />
+        <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
+        <button @click="sendMessage" class="send-btn">
+          <font-awesome-icon icon="paper-plane" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Resize handles -->
+    <div class="resize-handle resize-handle-left" @mousedown="(e) => startResize(e, 'left')"></div>
+    <div
+      class="resize-handle resize-handle-right"
+      @mousedown="(e) => startResize(e, 'right')"
+    ></div>
+    <div class="resize-handle resize-handle-top" @mousedown="(e) => startResize(e, 'top')"></div>
+    <div
+      class="resize-handle resize-handle-bottom"
+      @mousedown="(e) => startResize(e, 'bottom')"
+    ></div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useElementSize } from '@vueuse/core'
@@ -236,120 +350,6 @@ const clearSelectedFile = () => {
   }
 }
 </script>
-
-<template>
-  <div ref="chatInterface" class="chat-interface" :class="{ expanded: isExpanded }">
-    <div class="chat-header">
-      <div class="header-left">
-        <template v-if="isAi">
-          <font-awesome-icon icon="robot" />
-          <span>AI Assistant</span>
-        </template>
-        <template v-else>
-          <div
-            class="user-avatar capitalize"
-            :class="{
-              'group-avatar': user?.type === 'group',
-              online: user.type === 'user' && user.isOnline,
-            }"
-          >
-            <font-awesome-icon v-if="user?.type === 'group'" icon="users" />
-            <template v-else>{{ user?.username?.[0] }}</template>
-          </div>
-          <div class="user-info capitalize">
-            <span>{{ user?.username }}</span
-            ><br />
-          </div>
-        </template>
-      </div>
-      <div class="header-actions">
-        <button
-          v-if="user?.type === 'group' && !false"
-          class="group-info-btn"
-          @click="toggleGroupMembersModal"
-        >
-          <font-awesome-icon icon="users" />
-        </button>
-        <button @click="toggleExpand" class="action-btn">
-          <font-awesome-icon :icon="isExpanded ? 'compress' : 'expand'" />
-        </button>
-        <button @click="$emit('close')" class="action-btn">
-          <font-awesome-icon icon="xmark" />
-        </button>
-      </div>
-    </div>
-
-    <!-- Group Members Modal -->
-    <div v-if="showGroupMembersModal" class="modal-overlay" @click="toggleGroupMembersModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Group Members</h3>
-          <button @click="toggleGroupMembersModal" class="close-btn">
-            <font-awesome-icon icon="xmark" />
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="member-list">
-            <div v-for="member in user?.members" :key="member.id" class="member-item">
-              <div class="member-avatar">{{ member.name[0] }}</div>
-              <span>{{ member.name }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="messages bg-green-100">
-      <MessageList
-        ref="messageListRef"
-        :messages="chatStore.messages"
-        :current-user="chatStore.user"
-        :is-loading="isLoadingMessages"
-        @load-more="loadMoreMessages"
-      />
-    </div>
-
-    <div class="message-input bg-green-100">
-      <div
-        v-if="selectedFile"
-        class="flex justify-between items-center bg-gray-200"
-        style="padding: 10px; margin-bottom: 10px; border-radius: 10px"
-      >
-        <div class="text-gray-700">Selected file: {{ selectedFile.name }}</div>
-        <button @click="clearSelectedFile" class="text-gray-500 hover:text-gray-700">
-          <font-awesome-icon icon="xmark" />
-        </button>
-      </div>
-      <div class="flex w-full gap-5">
-        <div class="input-actions">
-          <button @click="fileInput?.click()" class="action-btn">
-            <font-awesome-icon icon="paperclip" />
-          </button>
-          <button @click="isRecording ? stopRecording() : startRecording()" class="action-btn">
-            <font-awesome-icon :icon="isRecording ? 'stop' : 'video'" />
-          </button>
-        </div>
-        <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." />
-        <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
-        <button @click="sendMessage" class="send-btn">
-          <font-awesome-icon icon="paper-plane" />
-        </button>
-      </div>
-    </div>
-
-    <!-- Resize handles -->
-    <div class="resize-handle resize-handle-left" @mousedown="(e) => startResize(e, 'left')"></div>
-    <div
-      class="resize-handle resize-handle-right"
-      @mousedown="(e) => startResize(e, 'right')"
-    ></div>
-    <div class="resize-handle resize-handle-top" @mousedown="(e) => startResize(e, 'top')"></div>
-    <div
-      class="resize-handle resize-handle-bottom"
-      @mousedown="(e) => startResize(e, 'bottom')"
-    ></div>
-  </div>
-</template>
 
 <style scoped lang="scss">
 .chat-interface {
