@@ -15,13 +15,13 @@ const loginUser = () => {
 </script>
 
 <template>
-  <div>
+  <div class="">
     <!-- Tempary code start -->
-    <div v-if="!chatStore.user">
+    <!-- <div v-if="!chatStore.user">
       <input type="text" class="border-2" v-model="username" />
       <button @click="loginUser">Login</button>
     </div>
-    <div v-else>User Name - {{ chatStore.user.username }}</div>
+    <div v-else>User Name - {{ chatStore.user.username }}</div> -->
     <!-- Tempary code end -->
 
     <ChatWindow />

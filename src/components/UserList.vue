@@ -88,7 +88,7 @@ onMounted(async () => {
         </div>
         <div
           v-if="getUnreadCount(chat._id, false) > 0"
-          class="text-xs bg-green-400 rounded-full"
+          class="text-xs rounded-full"
           style="padding: 5px"
         >
           {{ getUnreadCount(chat._id, false) }}

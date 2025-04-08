@@ -60,7 +60,7 @@
       </div>
     </div>
 
-    <div class="messages bg-green-100">
+    <div class="messages">
       <MessageList
         ref="messageListRef"
         :messages="chatStore.messages"
@@ -70,7 +70,7 @@
       />
     </div>
 
-    <div class="message-input bg-green-100">
+    <div class="message-input">
       <div
         v-if="selectedFile"
         class="flex justify-between items-center bg-gray-200"

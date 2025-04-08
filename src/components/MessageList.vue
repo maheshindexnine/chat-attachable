@@ -1,5 +1,5 @@
 <template>
-  <div class="message-list bg-green-100" ref="messageListRef" @scroll="handleScroll">
+  <div class="message-list" ref="messageListRef" @scroll="handleScroll">
     <div v-if="isTyping" class="typing-indicator">{{ typingUser }} is typing...</div>
 
     <div v-if="isLoading && messages.length === 0" class="loading-indicator">

@@ -1,12 +1,12 @@
 <template>
-  <div class="bg-green-100 min-h-screen flex">
+  <div class="min-h-screen flex">
     <div class="w-1/6 bg-white">
       <div class="bg-yellow-300 border-r-2 border-yellow-400" style="padding: 5px 20px">
         <div>
           <h2 class="text-2xl text-center font-bold capitalize" style="font-weight: 600">
             {{ chatStore.user?.username }}
           </h2>
-          <p v-if="chatStore.user?.isOnline" class="text-xs text-center text-green-600">Online</p>
+          <p v-if="chatStore.user?.isOnline" class="text-xs text-center">Online</p>
           <p v-if="!chatStore.user?.isOnline" class="text-xs text-center text-red-600">Offline</p>
         </div>
       </div>
