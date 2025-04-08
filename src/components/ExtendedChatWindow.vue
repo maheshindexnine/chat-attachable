@@ -264,9 +264,11 @@ const sendMessage = async () => {
     await chatStore.sendMessage({
       content: newMessage.value,
       receiverId: String(selectedUser.value._id),
+      attachment: selectedFile.value,
     })
 
     newMessage.value = ''
+    selectedFile.value = null
   } catch (error) {
     console.error('Error sending message:', error)
   }

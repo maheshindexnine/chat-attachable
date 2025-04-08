@@ -405,7 +405,7 @@ const isImageAttachment = (attachment) => {
 }
 
 const getAttachmentUrl = (attachment) => {
-  const apiUrl = import.meta.env.VITE_API_URL
+  const apiUrl = 'http://localhost:3000'
   console.log('API URL from env:', apiUrl) // Debug log
 
   if (!apiUrl) {

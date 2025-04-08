@@ -390,9 +390,21 @@ export const useChatStore = defineStore('chat', {
     ): Promise<Partial<Message> & { content: string }> {
       try {
         const formData = new FormData()
+        if (messageData.receiver) {
+          formData.append('receiver', messageData.receiver)
+        }
+        // else if (messageData.group) {
+        //   formData.append('group', messageData.group)
+        // }
+
+        formData.append('sender', messageData.sender)
         formData.append('file', attachment)
 
-        const { data } = await axios.post(`${API_URL}/upload`, formData, {
+        if (messageData.content) {
+          formData.append('content', messageData.content)
+        }
+
+        const { data } = await axios.post(`${API_URL}/messages/upload`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
