@@ -11,6 +11,14 @@
         />
       </div>
     </div>
+    <div
+      v-if="!filteredChats || filteredChats?.length === 0"
+      class="flex justify-center items-center h-screen animate-spin"
+    >
+      <div class="w-8 h-8 rounded-full flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full border-2 border-yellow-300 border-dashed"></div>
+      </div>
+    </div>
     <div class="users-container" v-if="filteredChats.length">
       <div
         v-for="chat in filteredChats"
@@ -42,7 +50,7 @@
         </div>
         <div
           v-if="getUnreadCount(chat._id, false) > 0"
-          class="text-xs rounded-full"
+          class="text-xs rounded-full bg-green-400 w-7 flex justify-center text-white font-bold"
           style="padding: 5px"
         >
           {{ getUnreadCount(chat._id, false) }}
