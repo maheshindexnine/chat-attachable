@@ -3,13 +3,13 @@ import ChatWindow from './components/ChatWindow.vue'
 import { ref } from 'vue'
 import { useChatStore } from './stores/chat'
 
-const username = ref('')
+const name = ref('')
 const chatStore = useChatStore()
 const loginUser = () => {
-  if (username.value !== '') {
-    chatStore.login(username.value)
+  if (name.value !== '') {
+    chatStore.login(name.value)
   } else {
-    alert('Username field is empty')
+    alert('name field is empty')
   }
 }
 </script>
@@ -18,10 +18,10 @@ const loginUser = () => {
   <div class="">
     <!-- Tempary code start -->
     <!-- <div v-if="!chatStore.user">
-      <input type="text" class="border-2" v-model="username" />
+      <input type="text" class="border-2" v-model="name" />
       <button @click="loginUser">Login</button>
     </div>
-    <div v-else>User Name - {{ chatStore.user.username }}</div> -->
+    <div v-else>User Name - {{ chatStore.user.name }}</div> -->
     <!-- Tempary code end -->
 
     <ChatWindow />

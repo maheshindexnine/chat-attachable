@@ -15,10 +15,10 @@
             }"
           >
             <font-awesome-icon v-if="user?.type === 'group'" icon="users" />
-            <template v-else>{{ user?.username?.[0] }}</template>
+            <template v-else>{{ user?.name?.[0] }}</template>
           </div>
           <div class="user-info capitalize">
-            <span>{{ user?.username }}</span
+            <span>{{ user?.name }}</span
             ><br />
           </div>
         </template>

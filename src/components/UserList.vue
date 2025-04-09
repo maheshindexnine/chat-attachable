@@ -1,49 +1,3 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useChatStore } from '../stores/chat'
-import { onMounted } from 'vue'
-
-interface User {
-  _id: string
-  username: string
-  isOnline?: boolean
-  lastSeen?: string | null
-  createdAt?: string
-  updatedAt?: string
-}
-
-const props = defineProps<{
-  selectedUser: User | null
-}>()
-
-const emit = defineEmits(['select-user'])
-
-const chatStore = useChatStore()
-
-const searchQuery = ref('')
-
-const filteredChats = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim()
-  if (!query) return chatStore.users
-
-  return chatStore.users.filter((chat) => {
-    return chat.username.toLowerCase().includes(query)
-  })
-})
-
-const selectChat = (chat: User) => {
-  emit('select-user', chat)
-}
-
-const getUnreadCount = (chatId: string, isGroup: string) => {
-  return chatStore.getUnreadCount(chatId, isGroup)
-}
-
-onMounted(async () => {
-  await chatStore.fetchUsers()
-})
-</script>
-
 <template>
   <div class="user-list">
     <div class="search-container">
@@ -57,7 +11,7 @@ onMounted(async () => {
         />
       </div>
     </div>
-    <div class="users-container">
+    <div class="users-container" v-if="filteredChats.length">
       <div
         v-for="chat in filteredChats"
         :key="chat._id"
@@ -76,11 +30,11 @@ onMounted(async () => {
           }"
         >
           <font-awesome-icon v-if="chat?.type === 'group'" icon="users" />
-          <template v-else>{{ chat.username[0] }}</template>
-          <template>{{ chat?.username[0] }}</template>
+          <template v-else>{{ chat?.name?.charAt(0) }}</template>
+          <template>{{ chat?.name?.charAt(0) }}</template>
         </div>
         <div class="user-info">
-          <div class="user-name capitalize">{{ chat.username }}</div>
+          <div class="user-name capitalize">{{ chat.name }}</div>
           <div class="user-status">
             <template v-if="chat?.type === 'user'">{{ chat.status }}</template>
             <!-- <template v-else>{{ chat.members?.length || 0 }} members</template> -->
@@ -97,6 +51,52 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useChatStore } from '../stores/chat'
+import { onMounted } from 'vue'
+import { watch } from 'vue'
+
+interface User {
+  _id: string
+  name: string
+  isOnline?: boolean
+  lastSeen?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+const props = defineProps<{
+  selectedUser: User | null
+}>()
+
+const emit = defineEmits(['select-user'])
+
+const chatStore = useChatStore()
+const searchQuery = ref('')
+
+const filteredChats = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return chatStore.users
+
+  return chatStore.users.filter((chat) => {
+    return chat.name.toLowerCase().includes(query)
+  })
+})
+
+const selectChat = (chat: User) => {
+  emit('select-user', chat)
+}
+
+const getUnreadCount = (chatId: string, isGroup: string) => {
+  return chatStore.getUnreadCount(chatId, isGroup)
+}
+
+onMounted(async () => {
+  await chatStore.fetchUsers()
+})
+</script>
 
 <style scoped lang="scss">
 .user-list {

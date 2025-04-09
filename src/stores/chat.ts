@@ -7,7 +7,7 @@ let socket: Socket | null = null
 
 export interface User {
   _id: string
-  username: string
+  name: string
   createdAt?: string
   isOnline?: boolean
   lastSeen?: string | null
@@ -129,17 +129,17 @@ export const useChatStore = defineStore('chat', {
       return this.unreadMessages[chatId] || 0
     },
 
-    async login(username: string): Promise<User> {
+    async login(name: string): Promise<User> {
       try {
-        if (!username?.trim()) {
-          throw new Error('Username is required')
+        if (!name?.trim()) {
+          throw new Error('name is required')
         }
 
-        const normalizedUsername = username.trim()
+        const normalizedname = name.trim()
         let user: User | null = null
 
         try {
-          const response = await axios.get<User>(`${API_URL}/users/username/${normalizedUsername}`)
+          const response = await axios.get<User>(`${API_URL}/users/name/${normalizedname}`)
           user = response.data
           console.log('Found existing user:', user)
         } catch (error) {
@@ -149,7 +149,7 @@ export const useChatStore = defineStore('chat', {
         if (!user) {
           try {
             const response = await axios.post<User>(`${API_URL}/users`, {
-              username: normalizedUsername,
+              name: normalizedname,
             })
             user = response.data
             console.log('Created new user:', user)
@@ -157,9 +157,7 @@ export const useChatStore = defineStore('chat', {
             console.error('Error creating user:', error)
 
             if (axios.isAxiosError(error) && error.response?.status === 409) {
-              const response = await axios.get<User>(
-                `${API_URL}/users/username/${normalizedUsername}`,
-              )
+              const response = await axios.get<User>(`${API_URL}/users/username/${normalizedname}`)
               user = response.data
               console.log('Retrieved existing user after conflict:', user)
             } else {
@@ -185,8 +183,8 @@ export const useChatStore = defineStore('chat', {
 
     async fetchUsers(): Promise<User[]> {
       try {
-        const { data } = await axios.get<User[]>(`${API_URL}/users`)
-        this.users = data
+        const { data }: any = await axios.get<User[]>(`${API_URL}/users`)
+        this.users = data?.data || []
         return data
       } catch (error) {
         console.error('Error fetching users:', error)
@@ -288,7 +286,7 @@ export const useChatStore = defineStore('chat', {
             if (senderUser) {
               message.sender = senderUser
             } else {
-              message.sender = { _id: message.sender as string, username: 'Unknown' }
+              message.sender = { _id: message.sender as string, name: 'Unknown' }
             }
           }
 

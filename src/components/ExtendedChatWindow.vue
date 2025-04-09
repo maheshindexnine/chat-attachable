@@ -4,7 +4,7 @@
       <div class="bg-yellow-300 border-r-2 border-yellow-400" style="padding: 5px 20px">
         <div>
           <h2 class="text-2xl text-center font-bold capitalize" style="font-weight: 600">
-            {{ chatStore.user?.username }}
+            {{ chatStore.user?.name }}
           </h2>
           <p v-if="chatStore.user?.isOnline" class="text-xs text-center">Online</p>
           <p v-if="!chatStore.user?.isOnline" class="text-xs text-center text-red-600">Offline</p>
@@ -20,10 +20,10 @@
             :class="{ 'group-avatar': selectedUser?.type === 'group' }"
           >
             <font-awesome-icon v-if="selectedUser?.type === 'group'" icon="users" />
-            <template v-else>{{ selectedUser?.username?.[0] }}</template>
+            <template v-else>{{ selectedUser?.name?.[0] }}</template>
           </div>
           <div class="user-info">
-            <span class="capitalize">{{ selectedUser?.username }}</span>
+            <span class="capitalize">{{ selectedUser?.name }}</span>
           </div>
         </div>
         <div class="flex gap-5 items-center">
@@ -107,8 +107,8 @@
       <div class="modal-body">
         <div class="member-list">
           <div v-for="member in user?.members" :key="member.id" class="member-item">
-            <div class="member-avatar">{{ member?.username[0] }}</div>
-            <span>{{ member?.username }}</span>
+            <div class="member-avatar">{{ member?.name[0] }}</div>
+            <span>{{ member?.name }}</span>
           </div>
         </div>
       </div>
@@ -175,7 +175,7 @@ watch(
     if (newUser) {
       const chatUser: User = {
         _id: String(newUser.id),
-        username: newUser?.username,
+        name: newUser?.name,
       }
       chatStore.setCurrentChat({ ...chatUser, type: 'user' })
     }
@@ -187,7 +187,7 @@ const selectUser = (user: LocalUser) => {
   selectedUser.value = user
   const chatUser: User = {
     _id: String(user?._id),
-    username: user?.username,
+    name: user?.name,
   }
   chatStore.setCurrentChat({ ...chatUser, type: 'user' })
 }

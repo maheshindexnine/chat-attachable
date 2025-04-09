@@ -13,7 +13,7 @@
     >
       <div class="message-bubble">
         <div class="message-sender" v-if="!isOwnMessage(message) && isGroupMessage(message)">
-          {{ message.sender.username }}
+          {{ message.sender.name }}
         </div>
         <div class="message-content" v-if="message.content">
           {{ message.content }}
@@ -207,7 +207,7 @@ onMounted(() => {
 
     // Show typing indicator
     isTyping.value = true
-    typingUser.value = event.detail.username
+    typingUser.value = event.detail.name
 
     // Clear previous timeout
     if (typingTimeout.value) {
@@ -914,7 +914,7 @@ const toggleVideo = () => {
 // Get call recipient name
 const getCallRecipientName = () => {
   if (chatStore.currentChat) {
-    return chatStore.currentChat.username || 'Group'
+    return chatStore.currentChat.name || 'Group'
   }
   return 'Unknown'
 }
@@ -955,7 +955,7 @@ const getCallerName = () => {
   if (!incomingCall.value) return 'Unknown'
 
   const caller = chatStore.users.find((u) => u._id === incomingCall.value.from)
-  return caller ? caller.username : 'Unknown User'
+  return caller ? caller.name : 'Unknown User'
 }
 
 // Accept incoming call
