@@ -116,7 +116,7 @@ const displayMessages = computed(() => {
 })
 
 const isOwnMessage = (message) => {
-  return message.sender._id === props.currentUser._id
+  return message.sender?._id === props.currentUser?._id
 }
 
 const isGroupMessage = (message) => {

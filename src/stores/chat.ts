@@ -183,9 +183,12 @@ export const useChatStore = defineStore('chat', {
 
     async fetchUsers(): Promise<User[]> {
       try {
-        const { data }: any = await axios.get<User[]>(`${API_URL}/users`)
-        this.users = data?.data || []
-        return data
+        const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
+        if (savedUser) {
+          const { data }: any = await axios.get<User[]>(`${API_URL}/users`)
+          this.users = data?.data?.filter((user) => user._id !== savedUser?._id)
+          return this.users
+        }
       } catch (error) {
         console.error('Error fetching users:', error)
         throw error

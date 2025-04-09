@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex">
-    <div class="w-1/6 bg-white">
+    <div class="w-1/6 bg-white max-h-screen">
       <div class="bg-yellow-300 border-r-2 border-yellow-400" style="padding: 5px 20px">
         <div>
           <h2 class="text-2xl text-center font-bold capitalize" style="font-weight: 600">
