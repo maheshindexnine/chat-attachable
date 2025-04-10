@@ -221,7 +221,7 @@ export const useChatStore = defineStore('chat', {
           createdBy: this.user?._id,
         })
 
-        this.groups.push(data)
+        this.fetchUsers()
         return data
       } catch (error) {
         console.error('Error creating group:', error)

@@ -189,8 +189,8 @@ const onUserStatus = () => {
   console.log('User Status clicked')
 }
 
-const createGroup = (data: any) => {
-  console.log(data, ' called creat group')
+const createGroup = async (data: any) => {
+  await chatStore.createGroup(data)
 }
 
 onMounted(async () => {

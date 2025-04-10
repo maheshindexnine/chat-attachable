@@ -137,7 +137,7 @@ const filteredUsers = computed(() => {
 const createGroup = () => {
   const group = {
     name: groupName.value,
-    members: selectedUserIds.value.map((_id) => props.users.find((u) => u._id === _id)),
+    members: selectedUserIds.value,
   }
   emit('create', group)
   emit('close')
