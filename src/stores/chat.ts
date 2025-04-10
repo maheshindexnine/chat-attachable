@@ -190,7 +190,7 @@ export const useChatStore = defineStore('chat', {
         this.isFetchingUsers = true
         const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
         if (savedUser) {
-          const { data }: any = await axios.get<User[]>(`${API_URL}/users?page=${page}&limit=10`)
+          const { data }: any = await axios.get<User[]>(`${API_URL}/users/v1?page=${page}&limit=10`)
           this.users = [...this.users, ...data?.data?.filter((user) => user._id !== savedUser?._id)]
           this.isFetchingUsers = false
           return this.users

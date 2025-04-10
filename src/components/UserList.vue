@@ -44,7 +44,7 @@
         @click="selectChat(chat)"
       >
         <div
-          :style="{ backgroundColor: chat?.backgroundImage }"
+          :style="{ backgroundColor: chat?.backgroundColor }"
           class="user-avatar capitalize"
           :class="{
             'group-avatar': chat?.type === 'group',

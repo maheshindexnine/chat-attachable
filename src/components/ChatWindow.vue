@@ -104,6 +104,17 @@
         />
       </div>
     </Transition>
+    <div v-if="showCreateGroupModal">
+      <CreateGroupModal
+        :users="chatStore.users"
+        @create="createGroup"
+        @close="
+          () => {
+            showCreateGroupModal = false
+          }
+        "
+      />
+    </div>
   </div>
 </template>
 
@@ -113,6 +124,7 @@ import UserList from './UserList.vue'
 import ChatInterface from './ChatInterface.vue'
 import ExtendedChatWindow from './ExtendedChatWindow.vue'
 import { useChatStore } from '@/stores/chat'
+import CreateGroupModal from './CreateGroupModal.vue'
 
 export interface User {
   id: number
@@ -130,6 +142,7 @@ const chatStore = useChatStore()
 const isMenuOpen = ref(false)
 const hovered = ref('')
 const dropdownRef = ref<HTMLElement | null>(null)
+const showCreateGroupModal = ref<boolean>(false)
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value
@@ -167,12 +180,17 @@ const closeDropdown = (e: MouseEvent) => {
 
 const onCreateGroup = () => {
   isMenuOpen.value = false
+  showCreateGroupModal.value = true
   console.log('Create Group clicked')
 }
 
 const onUserStatus = () => {
   isMenuOpen.value = false
   console.log('User Status clicked')
+}
+
+const createGroup = (data: any) => {
+  console.log(data, ' called creat group')
 }
 
 onMounted(async () => {
