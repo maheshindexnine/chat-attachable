@@ -28,7 +28,11 @@
     >
       No users or groups found.
     </h4>
-    <div class="users-container" v-if="filteredChats.length && !chatStore.isFetchingUsers">
+    <div
+      class="users-container"
+      v-if="filteredChats.length && !chatStore.isFetchingUsers"
+      ref="usersContainer"
+    >
       <div
         v-for="chat in filteredChats"
         :key="chat._id"
@@ -75,6 +79,7 @@ import { ref, computed } from 'vue'
 import { useChatStore } from '../stores/chat'
 import { onMounted } from 'vue'
 import { watch } from 'vue'
+import { onUnmounted } from 'vue'
 
 interface User {
   _id: string
@@ -111,8 +116,35 @@ const getUnreadCount = (chatId: string, isGroup: string) => {
   return chatStore.getUnreadCount(chatId, isGroup)
 }
 
+const page = ref(1)
+const usersContainer = ref<HTMLElement | null>(null)
+
+const handleScroll = () => {
+  if (!usersContainer.value || chatStore.isFetchingUsers) return
+
+  const el = usersContainer.value
+  const scrollPosition = el.scrollTop + el.clientHeight
+  const scrollHeight = el.scrollHeight
+
+  // If scrolled past 80%
+  if (scrollPosition >= scrollHeight * 0.8) {
+    page.value += 1
+    chatStore.fetchUsers(page.value)
+  }
+}
+
 onMounted(async () => {
   await chatStore.fetchUsers()
+
+  if (usersContainer.value) {
+    usersContainer.value.addEventListener('scroll', handleScroll)
+  }
+})
+
+onUnmounted(() => {
+  if (usersContainer.value) {
+    usersContainer.value.removeEventListener('scroll', handleScroll)
+  }
 })
 </script>
 

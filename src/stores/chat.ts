@@ -183,13 +183,13 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
-    async fetchUsers(): Promise<User[]> {
+    async fetchUsers(page = 1): Promise<User[]> {
       try {
         this.isFetchingUsers = true
         const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
         if (savedUser) {
-          const { data }: any = await axios.get<User[]>(`${API_URL}/users?page=1&limit=10`)
-          this.users = data?.data?.filter((user) => user._id !== savedUser?._id)
+          const { data }: any = await axios.get<User[]>(`${API_URL}/users?page=${page}&limit=10`)
+          this.users = [...this.users, ...data?.data?.filter((user) => user._id !== savedUser?._id)]
           this.isFetchingUsers = false
           return this.users
         }
