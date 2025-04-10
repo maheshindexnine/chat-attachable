@@ -23,15 +23,63 @@
         <button :class="{ active: activeTab === 'ai' }" @click="activeTab = 'ai'">
           <font-awesome-icon icon="robot" /> AI Chat
         </button>
+
+        <!-- Dropdown Section -->
+        <div ref="dropdownRef" class="relative ml-auto">
+          <div
+            class="flex justify-center items-center cursor-pointer"
+            @click="toggleDropdown"
+            style="padding: 8px; margin: 4px"
+          >
+            <font-awesome-icon icon="ellipsis-vertical" />
+          </div>
+
+          <div
+            v-if="isMenuOpen"
+            class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg z-50"
+            style="padding: 8px"
+          >
+            <div class="py-1">
+              <a
+                href="#"
+                @click.prevent="onCreateGroup"
+                class="block text-sm text-gray-800 rounded-md"
+                style="padding: 10px 16px; margin-bottom: 6px"
+                @mouseover="hovered = 'group'"
+                @mouseleave="hovered = ''"
+                :style="
+                  hovered === 'group'
+                    ? 'background-color: #facc15; box-shadow: 0 2px 8px rgba(0,0,0,0.15);'
+                    : ''
+                "
+              >
+                ➕ Create Group
+              </a>
+              <a
+                href="#"
+                @click.prevent="onUserStatus"
+                class="block text-sm text-gray-800 rounded-md"
+                style="padding: 10px 16px"
+                @mouseover="hovered = 'status'"
+                @mouseleave="hovered = ''"
+                :style="
+                  hovered === 'status'
+                    ? 'background-color: #facc15; box-shadow: 0 2px 8px rgba(0,0,0,0.15);'
+                    : ''
+                "
+              >
+                👤 User Status
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="content" :class="{ 'expanded-layout': false }">
-        <!-- Always show sidebar in chats tab -->
         <div class="sidebar">
           <UserList @select-user="selectUser" :selected-user="selectedUser" />
         </div>
 
-        <!-- Show AI chat in main area -->
         <div class="chat-area" v-if="activeTab === 'ai'">
           <ChatInterface
             :is-ai="true"
@@ -44,7 +92,7 @@
       </div>
     </div>
 
-    <!-- User Chat Window (always shown when user is selected) -->
+    <!-- User Chat Window -->
     <Transition name="slide">
       <div v-if="selectedUser" class="user-chat-window">
         <ChatInterface
@@ -60,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import UserList from './UserList.vue'
 import ChatInterface from './ChatInterface.vue'
 import ExtendedChatWindow from './ExtendedChatWindow.vue'
@@ -79,6 +127,9 @@ const selectedUser = ref<User | null>(null)
 const isOpen = ref(false)
 const isExpanded = ref(false)
 const chatStore = useChatStore()
+const isMenuOpen = ref(false)
+const hovered = ref('')
+const dropdownRef = ref<HTMLElement | null>(null)
 
 const toggleChat = () => {
   isOpen.value = !isOpen.value
@@ -95,25 +146,56 @@ const closeChat = () => {
   selectedUser.value = null
 }
 
-// Socket.io connection
-onMounted(async () => {
-  const isInitialized = await chatStore.initialize()
-  handleOnline()
-})
-
 const handleOnline = () => {
   console.log('Browser is online')
   chatStore.connectSocket()
-  if (chatStore.user) {
-  }
 }
 
 const handleExpand = (expanded: boolean) => {
   isExpanded.value = expanded
 }
+
+const toggleDropdown = () => {
+  isMenuOpen.value = !isMenuOpen.value
+}
+
+const closeDropdown = (e: MouseEvent) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    isMenuOpen.value = false
+  }
+}
+
+const onCreateGroup = () => {
+  isMenuOpen.value = false
+  console.log('Create Group clicked')
+}
+
+const onUserStatus = () => {
+  isMenuOpen.value = false
+  console.log('User Status clicked')
+}
+
+onMounted(async () => {
+  document.addEventListener('click', closeDropdown)
+  const isInitialized = await chatStore.initialize()
+  handleOnline()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeDropdown)
+})
 </script>
 
 <style scoped lang="scss">
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .chat-container {
   position: fixed;
   bottom: 20px;
