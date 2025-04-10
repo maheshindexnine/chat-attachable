@@ -49,6 +49,7 @@ interface ChatState {
   onlineUsers: Record<string, boolean>
   unreadMessages: Record<string, number>
   typingUsers: Record<string, boolean>
+  isFetchingUsers: Boolean
 }
 
 interface MessageParams {
@@ -75,6 +76,7 @@ export const useChatStore = defineStore('chat', {
     onlineUsers: {},
     unreadMessages: {},
     typingUsers: {},
+    isFetchingUsers: false,
   }),
 
   actions: {
@@ -183,10 +185,12 @@ export const useChatStore = defineStore('chat', {
 
     async fetchUsers(): Promise<User[]> {
       try {
+        this.isFetchingUsers = true
         const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
         if (savedUser) {
-          const { data }: any = await axios.get<User[]>(`${API_URL}/users`)
+          const { data }: any = await axios.get<User[]>(`${API_URL}/users?page=1&limit=10`)
           this.users = data?.data?.filter((user) => user._id !== savedUser?._id)
+          this.isFetchingUsers = false
           return this.users
         }
       } catch (error) {

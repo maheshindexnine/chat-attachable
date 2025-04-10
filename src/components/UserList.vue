@@ -11,15 +11,24 @@
         />
       </div>
     </div>
-    <div
-      v-if="!filteredChats || filteredChats?.length === 0"
-      class="flex justify-center items-center h-screen animate-spin"
-    >
-      <div class="w-8 h-8 rounded-full flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full border-2 border-yellow-300 border-dashed"></div>
+    <div v-if="chatStore.isFetchingUsers" class="flex justify-center items-center h-screen">
+      <div>
+        <div
+          style="margin-left: 40%; margin-bottom: 10px"
+          class="w-10 h-10 rounded-full flex items-center justify-center animate-spin"
+        >
+          <div class="w-10 h-10 rounded-full border-2 border-yellow-300 border-dashed"></div>
+        </div>
+        <span class="text-gray-600">Fetching users and groups...</span>
       </div>
     </div>
-    <div class="users-container" v-if="filteredChats.length">
+    <h4
+      v-if="(!filteredChats || filteredChats?.length === 0) && !chatStore.isFetchingUsers"
+      class="flex justify-center items-center h-screen text-gray-400 font-semibold"
+    >
+      No users or groups found.
+    </h4>
+    <div class="users-container" v-if="filteredChats.length && !chatStore.isFetchingUsers">
       <div
         v-for="chat in filteredChats"
         :key="chat._id"
@@ -31,6 +40,7 @@
         @click="selectChat(chat)"
       >
         <div
+          :style="{ backgroundColor: chat?.backgroundImage }"
           class="user-avatar capitalize"
           :class="{
             'group-avatar': chat?.type === 'group',
