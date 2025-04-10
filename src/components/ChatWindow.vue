@@ -1,57 +1,3 @@
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import UserList from './UserList.vue'
-import ChatInterface from './ChatInterface.vue'
-import ExtendedChatWindow from './ExtendedChatWindow.vue'
-import { useChatStore } from '@/stores/chat'
-
-export interface User {
-  id: number
-  name: string
-  type: 'user' | 'group'
-  status?: 'online' | 'offline'
-  members?: Array<{ id: number; name: string }>
-}
-
-const activeTab = ref('chats')
-const selectedUser = ref<User | null>(null)
-const isOpen = ref(false)
-const isExpanded = ref(false)
-const chatStore = useChatStore()
-
-const toggleChat = () => {
-  isOpen.value = !isOpen.value
-}
-
-const selectUser = (user: User) => {
-  selectedUser.value = user
-  chatStore.setCurrentChat(user)
-}
-
-const closeChat = () => {
-  sessionStorage.removeItem('currentChat')
-  chatStore.resetCurrentChat()
-  selectedUser.value = null
-}
-
-// Socket.io connection
-onMounted(async () => {
-  const isInitialized = await chatStore.initialize()
-  handleOnline()
-})
-
-const handleOnline = () => {
-  console.log('Browser is online')
-  chatStore.connectSocket()
-  if (chatStore.user) {
-  }
-}
-
-const handleExpand = (expanded: boolean) => {
-  isExpanded.value = expanded
-}
-</script>
-
 <template>
   <div v-if="isExpanded">
     <ExtendedChatWindow
@@ -112,6 +58,60 @@ const handleExpand = (expanded: boolean) => {
     </Transition>
   </div>
 </template>
+
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import UserList from './UserList.vue'
+import ChatInterface from './ChatInterface.vue'
+import ExtendedChatWindow from './ExtendedChatWindow.vue'
+import { useChatStore } from '@/stores/chat'
+
+export interface User {
+  id: number
+  name: string
+  type: 'user' | 'group'
+  status?: 'online' | 'offline'
+  members?: Array<{ id: number; name: string }>
+}
+
+const activeTab = ref('chats')
+const selectedUser = ref<User | null>(null)
+const isOpen = ref(false)
+const isExpanded = ref(false)
+const chatStore = useChatStore()
+
+const toggleChat = () => {
+  isOpen.value = !isOpen.value
+}
+
+const selectUser = (user: User) => {
+  selectedUser.value = user
+  chatStore.setCurrentChat(user)
+}
+
+const closeChat = () => {
+  sessionStorage.removeItem('currentChat')
+  chatStore.resetCurrentChat()
+  selectedUser.value = null
+}
+
+// Socket.io connection
+onMounted(async () => {
+  const isInitialized = await chatStore.initialize()
+  handleOnline()
+})
+
+const handleOnline = () => {
+  console.log('Browser is online')
+  chatStore.connectSocket()
+  if (chatStore.user) {
+  }
+}
+
+const handleExpand = (expanded: boolean) => {
+  isExpanded.value = expanded
+}
+</script>
 
 <style scoped lang="scss">
 .chat-container {
