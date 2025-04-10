@@ -50,6 +50,7 @@ interface ChatState {
   unreadMessages: Record<string, number>
   typingUsers: Record<string, boolean>
   isFetchingUsers: Boolean
+  isFetchingMessages: Boolean
 }
 
 interface MessageParams {
@@ -77,6 +78,7 @@ export const useChatStore = defineStore('chat', {
     unreadMessages: {},
     typingUsers: {},
     isFetchingUsers: false,
+    isFetchingMessages: false,
   }),
 
   actions: {
@@ -194,6 +196,7 @@ export const useChatStore = defineStore('chat', {
           return this.users
         }
       } catch (error) {
+        this.isFetchingUsers = false
         console.error('Error fetching users:', error)
         throw error
       }
@@ -233,6 +236,7 @@ export const useChatStore = defineStore('chat', {
       limit = 20,
     }: MessageParams): Promise<Message[]> {
       try {
+        this.isFetchingMessages = true
         console.log('frontend1:', chatId, chatType)
         const endpoint =
           chatType === 'user'
@@ -248,9 +252,10 @@ export const useChatStore = defineStore('chat', {
         } else {
           this.messages = [...data, ...this.messages]
         }
-
+        this.isFetchingMessages = false
         return data
       } catch (error) {
+        this.isFetchingMessages = false
         console.error('Error fetching messages:', error)
         throw error
       }

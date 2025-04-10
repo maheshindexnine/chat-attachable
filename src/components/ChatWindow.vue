@@ -25,7 +25,7 @@ const toggleChat = () => {
 
 const selectUser = (user: User) => {
   selectedUser.value = user
-  chatStore.setCurrentChat({ ...user, type: 'user' })
+  chatStore.setCurrentChat(user)
 }
 
 const closeChat = () => {

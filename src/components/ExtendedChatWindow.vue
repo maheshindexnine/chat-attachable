@@ -6,8 +6,18 @@
           <h2 class="text-2xl text-center font-bold capitalize" style="font-weight: 600">
             {{ chatStore.user?.name }}
           </h2>
-          <p v-if="chatStore.user?.isOnline" class="text-xs text-center">Online</p>
-          <p v-if="!chatStore.user?.isOnline" class="text-xs text-center text-red-600">Offline</p>
+          <h5
+            v-if="chatStore.user?.isOnline"
+            class="text-xs text-center text-green-600 font-semibold"
+          >
+            Online
+          </h5>
+          <h5
+            v-if="!chatStore.user?.isOnline"
+            class="text-xs text-center text-red-600 font-semibold"
+          >
+            Offline
+          </h5>
         </div>
       </div>
       <UserList @select-user="selectUser" :selected-user="selectedUser" />

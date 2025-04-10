@@ -52,15 +52,31 @@
         <div class="modal-body">
           <div class="member-list">
             <div v-for="member in user?.members" :key="member.id" class="member-item">
-              <div class="member-avatar">{{ member.name[0] }}</div>
-              <span>{{ member.name }}</span>
+              <div class="member-avatar capitalize">{{ member.name[0] }}</div>
+              <span class="capitalize font-semibold">{{ member.name }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <div class="messages">
+    <div v-if="chatStore.isFetchingUsers" class="flex justify-center items-center h-screen">
+      <div>
+        <div
+          style="margin-left: 40%; margin-bottom: 10px"
+          class="w-10 h-10 rounded-full flex items-center justify-center animate-spin"
+        >
+          <div class="w-10 h-10 rounded-full border-2 border-yellow-300 border-dashed"></div>
+        </div>
+        <span class="text-gray-600">Fetching messages...</span>
+      </div>
+    </div>
+    <h5
+      class="flex justify-center items-center h-screen text-gray-400 font-semibold"
+      v-if="!chatStore.isFetchingUsers && chatStore.messages.length === 0"
+    >
+      No Messages Found
+    </h5>
+    <div class="messages" v-if="!chatStore.isFetchingUsers && chatStore.messages">
       <MessageList
         ref="messageListRef"
         :messages="chatStore.messages"
