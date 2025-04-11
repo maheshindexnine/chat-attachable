@@ -175,6 +175,14 @@
   <div v-if="showDeleteConfirmation">
     <DeleteMessageModal @confirm="deleteConfirmMessage" @cancel="cancelDeleteMessage" />
   </div>
+  <div v-if="showForwardModal">
+    <ForwardMessageModal
+      :users="chatStore.users"
+      :message="forwardingMessage?.content || 'asdasd'"
+      @close="showForwardModal = false"
+      @forward="forwardMessageToChat"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -185,6 +193,7 @@ import RecordRTC from 'recordrtc'
 import { useChatStore } from '../stores/chat'
 import { computed } from 'vue'
 import DeleteMessageModal from './DeleteMessageModal.vue'
+import ForwardMessageModal from './ForwardMessageModal.vue'
 
 interface LocalUser {
   id: number

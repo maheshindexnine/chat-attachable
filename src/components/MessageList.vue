@@ -17,6 +17,11 @@
         @mouseenter="hoveredIndex = index"
         @mouseleave="hoveredIndex = null"
       >
+        <!-- Add forwarded indicator -->
+        <div v-if="message.isForwarded" class="forwarded-indicator">
+          <font-awesome-icon icon="share" />
+          <span>Forwarded</span>
+        </div>
         <div class="message-content deleted-text" v-if="message.isDeleted">
           <h4 class="italic">Message deleted</h4>
           <p class="text-xs">
@@ -93,6 +98,7 @@
               icon="share"
               class="bg-gray-400 rounded-full cursor-pointer text-white"
               style="padding: 5px"
+              @click="forwardMessage(message)"
             />
             <font-awesome-icon
               icon="trash"
@@ -195,6 +201,10 @@ const replyToMessage = (message) => {
 
 const deleteMessage = (message) => {
   emit('delete-message', message)
+}
+
+const forwardMessage = (message) => {
+  emit('forward-message', message)
 }
 
 // Add a function to get the preview of the replied message
@@ -1262,6 +1272,19 @@ defineExpose({
 </script>
 
 <style scoped>
+.forwarded-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #757575;
+  margin-bottom: 4px;
+}
+
+.forwarded-indicator svg {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
 .message-list {
   flex: 1;
   overflow-y: auto;
