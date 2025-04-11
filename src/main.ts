@@ -18,6 +18,10 @@ import {
   faEllipsisV,
   faInfoCircle,
   faEllipsisVertical,
+  faReply,
+  faShare,
+  faTrash,
+  faPenToSquare,
 } from '@fortawesome/free-solid-svg-icons'
 
 import App from './App.vue'
@@ -37,6 +41,10 @@ library.add(
   faEllipsisV,
   faInfoCircle,
   faEllipsisVertical,
+  faShare,
+  faReply,
+  faTrash,
+  faPenToSquare,
 )
 
 const app = createApp(App)

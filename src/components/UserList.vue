@@ -57,6 +57,7 @@
         </div>
         <div class="user-info">
           <div class="user-name capitalize">{{ chat.name }}</div>
+          <p class="capitalize text-xs text-green-500">Typing...</p>
           <div class="user-status">
             <template v-if="chat?.type === 'user'">{{ chat.status }}</template>
             <!-- <template v-else>{{ chat.members?.length || 0 }} members</template> -->

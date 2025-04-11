@@ -38,6 +38,9 @@ interface Message {
   read?: boolean
   createdAt: string
   updatedAt: string
+  replyTo?: string
+  isForwarded?: boolean
+  taggedUsers?: Array
 }
 
 interface ChatState {
@@ -65,6 +68,9 @@ interface SendMessageParams {
   receiverId?: string
   groupId?: string
   attachment?: File
+  replyTo?: string
+  isForwarded?: boolean
+  taggedUsers?: Array
 }
 
 export const useChatStore = defineStore('chat', {
@@ -79,6 +85,7 @@ export const useChatStore = defineStore('chat', {
     typingUsers: {},
     isFetchingUsers: false,
     isFetchingMessages: false,
+    typingUsers: {},
   }),
 
   actions: {
@@ -332,29 +339,44 @@ export const useChatStore = defineStore('chat', {
           this.onlineUsers[userId] = false
         })
 
-        socket.on(
-          'userTyping',
-          ({
+        // Add typing event handlers
+        socket.on('userTyping', (data) => {
+          console.log('User typing:', data)
+          const { userId, username, groupId } = data
+
+          // Skip if it's the current user
+          if (userId === this.user._id) return
+
+          // Add to typing users
+          this.typingUsers[userId] = {
             userId,
-            receiverId,
+            username,
+            timestamp: Date.now(),
             groupId,
-          }: {
-            userId: string
-            receiverId?: string
-            groupId?: string
-          }) => {
-            if (
-              this.currentChat &&
-              ((this.currentChat.type === 'user' && receiverId === this.user?._id) ||
-                (this.currentChat.type === 'group' && groupId === this.currentChat._id))
-            ) {
-              this.typingUsers[userId] = true
-              setTimeout(() => {
-                this.typingUsers[userId] = false
-              }, 3000)
-            }
-          },
-        )
+          }
+
+          // Dispatch custom event for components to react
+          window.dispatchEvent(
+            new CustomEvent('user-typing', {
+              detail: { userId, username, groupId },
+            }),
+          )
+        })
+
+        socket.on('userStoppedTyping', (data) => {
+          console.log('User stopped typing:', data)
+          const { userId } = data
+
+          // Remove from typing users
+          // delete this.typingUsers[userId];
+
+          // Dispatch custom event
+          window.dispatchEvent(
+            new CustomEvent('user-stopped-typing', {
+              detail: { userId },
+            }),
+          )
+        })
       } catch (error) {
         console.error('Socket connection error:', error)
       }
@@ -365,6 +387,9 @@ export const useChatStore = defineStore('chat', {
       receiverId,
       groupId,
       attachment,
+      replyTo,
+      isForwarded,
+      taggedUsers,
     }: SendMessageParams): Promise<void> {
       try {
         let messageData: Partial<Message> & { content: string } = {
@@ -378,18 +403,99 @@ export const useChatStore = defineStore('chat', {
           messageData.groupId = groupId
         }
 
-        console.log('2 messageData')
+        // Add reply information if provided
+        if (replyTo) {
+          messageData.replyTo = replyTo
+        }
+
+        // Add forwarded flag if provided
+        if (isForwarded) {
+          messageData.isForwarded = true
+        }
+
+        // Add tagged users if provided
+        if (taggedUsers && taggedUsers.length > 0) {
+          messageData.taggedUsers = taggedUsers
+        }
 
         if (attachment) {
           messageData = await this.uploadAttachment(messageData, attachment)
         }
 
         console.log('3 messageData')
-        console.log(messageData, ' messageData')
+        console.log(messageData, ' messageData ***************** ', replyTo)
 
         socket?.emit('sendMessage', messageData)
       } catch (error) {
         console.error('Error sending message:', error)
+        throw error
+      }
+    },
+
+    async editMessage({ messageId, content, attachment }) {
+      console.log('Store: editMessage called with:', {
+        messageId,
+        content,
+        attachment,
+      })
+
+      try {
+        // First check if the message exists in our local state
+        const messageIndex = this.messages.findIndex((m) => m._id === messageId)
+        if (messageIndex === -1) {
+          console.error('Message not found in local state:', messageId)
+          return
+        }
+
+        // Make API call to update the message in the database
+        const response = await axios.put(`${API_URL}/messages/${messageId}`, {
+          content,
+          edited: true,
+        })
+
+        // Update the message in local state
+        if (response.data) {
+          this.messages[messageIndex] = response.data
+        } else {
+          // Fallback if response doesn't contain the updated message
+          this.messages[messageIndex].content = content
+          this.messages[messageIndex].edited = true
+        }
+
+        console.log('Message updated in local state:', this.messages[messageIndex])
+
+        // Emit socket event to notify other users about the edited message
+        if (socket) {
+          socket.emit('messageEdited', {
+            messageId,
+            content,
+            userId: this.user._id,
+          })
+        }
+
+        return this.messages[messageIndex]
+      } catch (error) {
+        console.error('Error editing message:', error)
+        throw error
+      }
+    },
+
+    // Add a new method to delete a message
+    async deleteMessage(messageId: string) {
+      try {
+        const { data } = await axios.delete(`${API_URL}/messages/${messageId}`)
+
+        // Emit a socket event to notify other users about the deleted message
+        if (socket) {
+          socket.emit('messageDeleted', {
+            messageId: messageId,
+            userId: this.user?._id,
+          })
+        }
+
+        return data
+      } catch (error) {
+        console.error('Error deleting message:', error)
         throw error
       }
     },
@@ -442,8 +548,30 @@ export const useChatStore = defineStore('chat', {
       socket?.emit('leaveGroup', { groupId })
     },
 
-    sendTypingStatus({ receiverId, groupId }: { receiverId?: string; groupId?: string }): void {
-      socket?.emit('typing', { receiverId, groupId })
+    sendTypingStatus({ receiverId, groupId, username }) {
+      if (!socket || !socket.connected) {
+        console.log('Socket not connected, reconnecting...')
+        this.connectSocket()
+      }
+
+      const typingData = {
+        userId: this.user?._id,
+        username,
+        receiverId,
+        groupId,
+      }
+
+      // Add timestamp to typing data to help with expiration
+      typingData.timestamp = Date.now()
+
+      // console.log("Sending typing event to server:", typingData);
+      // console.log("Socket connected?", socket?.connected);
+      // console.log("Socket ID:", socket?.id);
+
+      socket?.emit('typing', typingData, (acknowledgement) => {
+        // This callback will be executed if the server acknowledges the event
+        console.log('Server acknowledged typing event:', acknowledgement)
+      })
     },
 
     markMessageAsRead(messageId: string): void {

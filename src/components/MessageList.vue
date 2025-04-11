@@ -11,29 +11,95 @@
       class="message-container"
       :class="{ 'own-message': isOwnMessage(message) }"
     >
-      <div class="message-bubble">
-        <div class="message-sender" v-if="!isOwnMessage(message) && isGroupMessage(message)">
-          {{ message.sender.name }}
+      <div
+        class="message-bubble relative"
+        :class="{ 'deleted-message': message.isDeleted }"
+        @mouseenter="hoveredIndex = index"
+        @mouseleave="hoveredIndex = null"
+      >
+        <div class="message-content deleted-text" v-if="message.isDeleted">
+          <h4 class="italic">Message deleted</h4>
+          <p class="text-xs">
+            {{ formatTime(message.createdAt) }}
+          </p>
         </div>
-        <div class="message-content" v-if="message.content">
-          {{ message.content }}
-        </div>
-        <div class="message-attachment" v-if="message.attachment">
-          <img
-            v-if="isImageAttachment(message.attachment)"
-            :src="getAttachmentUrl(message.attachment)"
-            alt="Image attachment"
-            class="attachment-image"
-            @click="openAttachment(message.attachment)"
-          />
-          <div v-else class="file-attachment" @click="openAttachment(message.attachment)">
-            <span class="file-icon">📎</span>
-            <span class="file-name">{{ message.attachment.originalName }}</span>
+        <div v-if="!message.isDeleted">
+          <div class="message-sender" v-if="!isOwnMessage(message) && isGroupMessage(message)">
+            {{ message.sender.name }}
           </div>
-        </div>
-        <div class="message-time">
-          {{ formatTime(message.createdAt) }}
-          <span class="read-status" v-if="isOwnMessage(message) && message.read">✓</span>
+          <div
+            v-if="message.replyTo"
+            class="reply-indicator"
+            @click="scrollToOriginalMessage(message.replyTo)"
+          >
+            <div
+              class="reply-preview bg-gray-300 flex gap-3 items-center rounded-sm"
+              style="padding: 0 10px"
+            >
+              <font-awesome-icon icon="reply" />
+              <span v-if="!getReplyPreview(message.replyTo).isAttachment">
+                {{ getReplyPreview(message.replyTo).content }}</span
+              >
+              <span v-else-if="getReplyPreview(message.replyTo).isAttachment">
+                <img
+                  v-if="isImageAttachment(getReplyPreview(message.replyTo).attachment)"
+                  :src="getAttachmentUrl(getReplyPreview(message.replyTo).attachment)"
+                  alt="Image attachment"
+                  class="attachment-image"
+                />
+                {{ getReplyPreview(message.replyTo).content }}</span
+              >
+              <span v-else>Original message not available</span>
+            </div>
+          </div>
+          <div class="message-content" v-if="message.content">
+            {{ message.content
+            }}<span v-if="message.edited" class="edited-indicator"> (edited)</span>
+          </div>
+          <div class="message-attachment" v-if="message.attachment">
+            <img
+              v-if="isImageAttachment(message.attachment)"
+              :src="getAttachmentUrl(message.attachment)"
+              alt="Image attachment"
+              class="attachment-image"
+              @click="openAttachment(message.attachment)"
+            />
+            <div v-else class="file-attachment" @click="openAttachment(message.attachment)">
+              <span class="file-icon">📎</span>
+              <span class="file-name">{{ message.attachment.originalName }}</span>
+            </div>
+          </div>
+          <div class="message-time">
+            {{ formatTime(message.createdAt) }}
+            <span class="read-status" v-if="isOwnMessage(message) && message.read">✓</span>
+          </div>
+          <div
+            v-if="isOwnMessage(message) && hoveredIndex === index"
+            class="flex gap-3 items-center"
+            style="margin-top: 20px"
+          >
+            <font-awesome-icon
+              icon="pen-to-square"
+              class="text-blue-500 cursor-pointer"
+              @click="editMessage(message)"
+            />
+            <font-awesome-icon
+              icon="reply"
+              class="bg-gray-400 rounded-full cursor-pointer text-white"
+              style="padding: 5px"
+              @click="replyToMessage(message)"
+            />
+            <font-awesome-icon
+              icon="share"
+              class="bg-gray-400 rounded-full cursor-pointer text-white"
+              style="padding: 5px"
+            />
+            <font-awesome-icon
+              icon="trash"
+              class="text-red-500 cursor-pointer"
+              @click="deleteMessage(message)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -59,6 +125,7 @@ const props = defineProps({
   },
 })
 
+const hoveredIndex = ref(false)
 const emit = defineEmits(['load-more'])
 const chatStore = useChatStore()
 const messageListRef = ref(null)
@@ -99,6 +166,8 @@ const incomingCallNew = ref(null)
 const isScreenSharing = ref(false)
 const screenStream = ref(null)
 
+const highlightedMessageId = ref(null)
+
 // Create a computed property that sorts messages by timestamp
 const displayMessages = computed(() => {
   // Sort messages by timestamp in ascending order (oldest first)
@@ -114,6 +183,78 @@ const displayMessages = computed(() => {
 
   return sortedMessages
 })
+
+// Ensure this function is properly defined
+const editMessage = (message) => {
+  emit('edit-message', message)
+}
+
+const replyToMessage = (message) => {
+  emit('reply-message', message)
+}
+
+const deleteMessage = (message) => {
+  emit('delete-message', message)
+}
+
+// Add a function to get the preview of the replied message
+const getReplyPreview = (replyToId) => {
+  const replyMessage = props.messages.find((m) => m._id === replyToId)
+  if (replyMessage) {
+    return {
+      content:
+        replyMessage.content.length > 30
+          ? replyMessage.content.substring(0, 30) + '...'
+          : replyMessage.content,
+      isAttachment: replyMessage.attachment ? true : false,
+      attachment: replyMessage.attachment ?? null,
+    }
+  }
+  return {
+    content: 'Original message not available',
+    isAttachment: false,
+    attachment: null,
+  }
+}
+
+// Function to scroll to the original message when a reply is clicked
+const scrollToOriginalMessage = (originalMessageId) => {
+  // Find the original message in the current messages
+  const originalMessage = props.messages.find((m) => m._id === originalMessageId)
+
+  if (!originalMessage) {
+    console.warn('Original message not found in current messages:', originalMessageId)
+    return
+  }
+
+  // Use nextTick to ensure DOM is updated before scrolling
+  nextTick(() => {
+    // Get the element for the original message
+    const messageElement = document.getElementById(`message-${originalMessageId}`)
+
+    if (!messageElement) {
+      console.warn('Original message element not found in DOM:', `message-${originalMessageId}`)
+      return
+    }
+
+    // Scroll the message into view
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+    // Add a more noticeable highlight
+    highlightedMessageId.value = originalMessageId
+
+    // Flash the message to make it more visible
+    messageElement.classList.add('flash-highlight')
+
+    // Remove the highlight classes after a delay
+    setTimeout(() => {
+      highlightedMessageId.value = null
+      if (messageElement) {
+        messageElement.classList.remove('flash-highlight')
+      }
+    }, 3000)
+  })
+}
 
 const isOwnMessage = (message) => {
   return message.sender?._id === props.currentUser?._id
@@ -191,9 +332,18 @@ const handleScroll = () => {
   }
 }
 
-onMounted(() => {
-  console.log('MessageList component mounted')
+// Add a handler for message deleted events
+const handleMessageDeleted = (event) => {
+  const { messageId } = event.detail
 
+  // Find the message in the current messages and mark it as deleted
+  const messageIndex = props.messages.findIndex((msg) => msg._id === messageId)
+  if (messageIndex !== -1) {
+    props.messages[messageIndex].isDeleted = true
+  }
+}
+
+onMounted(() => {
   // Scroll to bottom initially
   setTimeout(() => {
     if (messageListRef.value) {
@@ -203,8 +353,6 @@ onMounted(() => {
 
   // Define the typing event handler function
   const handleTypingEvent = (event) => {
-    console.log('Typing event received in MessageList:', event.detail)
-
     // Show typing indicator
     isTyping.value = true
     typingUser.value = event.detail.name
@@ -216,13 +364,11 @@ onMounted(() => {
 
     // Set new timeout to clear typing indicator after 3 seconds
     typingTimeout.value = setTimeout(() => {
-      console.log('Clearing typing indicator in MessageList')
       isTyping.value = false
     }, 3000)
   }
 
   // Listen for typing events
-  console.log('Adding user-typing event listener to window')
   window.addEventListener('user-typing', handleTypingEvent)
 
   // Store the handler for cleanup
@@ -271,6 +417,9 @@ onMounted(() => {
 
     // Play a ringtone sound
     playRingtone()
+
+    // Add event listener for message deleted events
+    window.addEventListener('message-deleted', handleMessageDeleted)
   }
 
   // Listen for incoming call events
@@ -299,7 +448,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  console.log('MessageList component unmounting, removing event listeners')
   if (typingEventHandler.value) {
     window.removeEventListener('user-typing', typingEventHandler.value)
   }
@@ -389,16 +537,6 @@ watch(
   },
 )
 
-// Add this watch to debug when messages prop changes
-// watch(
-//   () => props.messages,
-//   (newMessages) => {
-//     console.log("Messages prop changed:", newMessages.length);
-//     console.log("Last message:", newMessages[newMessages.length - 1]);
-//   },
-//   { deep: true }
-// );
-
 const isImageAttachment = (attachment) => {
   if (!attachment || !attachment.mimeType) return false
   return attachment.mimeType.startsWith('image/')
@@ -406,7 +544,6 @@ const isImageAttachment = (attachment) => {
 
 const getAttachmentUrl = (attachment) => {
   const apiUrl = 'http://localhost:3000'
-  console.log('API URL from env:', apiUrl) // Debug log
 
   if (!apiUrl) {
     console.warn('VITE_API_URL is not defined in environment variables')
@@ -1458,5 +1595,15 @@ defineExpose({
 
 .call-action-button:hover {
   transform: scale(1.1);
+}
+
+.deleted-message {
+  opacity: 0.7;
+}
+
+.edited-indicator {
+  font-size: 0.8em;
+  color: #888;
+  font-style: italic;
 }
 </style>
