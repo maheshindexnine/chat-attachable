@@ -671,15 +671,28 @@ const sendMessage = async () => {
         receiverId: String(props.user._id),
         attachment: selectedFile.value,
         replyTo: replyingMessageId.value,
+        type: props.user?.type,
       })
 
       isReplying.value = false
       replyingMessageId.value = null
     } else {
+      // await chatStore.sendMessage({
+      //   content: message.value,
+      //   receiverId: String(props.user._id),
+      //   attachment: selectedFile.value,
+      //   replyTo: undefined,
+      //   type: props.user?.type,
+      // })
+
       await chatStore.sendMessage({
         content: message.value,
         receiverId: String(props.user._id),
         attachment: selectedFile.value,
+        replyTo: undefined,
+        isForwarded: false,
+        taggedUsers: [],
+        type: props.user.type,
       })
     }
 
