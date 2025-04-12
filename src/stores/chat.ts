@@ -400,7 +400,7 @@ export const useChatStore = defineStore('chat', {
         if (receiverId) {
           messageData.receiver = receiverId
         } else if (groupId) {
-          messageData.groupId = groupId
+          messageData.group = groupId
         }
 
         // Add reply information if provided
@@ -595,6 +595,7 @@ export const useChatStore = defineStore('chat', {
           chatId: chat._id,
           isGroup: chat.type === 'group',
         })
+        console.log('set current chat is here ', chat)
 
         this.fetchMessages({
           chatId: chat._id,

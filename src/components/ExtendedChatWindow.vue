@@ -575,7 +575,7 @@ watch(
         _id: String(newUser.id),
         name: newUser?.name,
       }
-      chatStore.setCurrentChat({ ...chatUser, type: 'user' })
+      chatStore.setCurrentChat({ ...chatUser })
     }
   },
   { immediate: true },
@@ -587,7 +587,7 @@ const selectUser = (user: LocalUser) => {
     _id: String(user?._id),
     name: user?.name,
   }
-  chatStore.setCurrentChat({ ...chatUser, type: 'user' })
+  chatStore.setCurrentChat({ ...chatUser })
 }
 
 // Socket.io connection
@@ -666,31 +666,42 @@ const sendMessage = async () => {
         return
       }
 
-      // Handle editing message
-      await chatStore.editMessage({
-        messageId: editingMessageId.value,
-        content: message.value,
-        attachment: selectedFile.value,
-      })
       // Reset editing state
       isEditing.value = false
       editingMessageId.value = null
     } else if (isReplying.value) {
-      await chatStore.sendMessage({
-        content: message.value,
-        receiverId: String(selectedUser.value._id),
-        attachment: selectedFile.value,
-        replyTo: replyingMessageId.value,
-      })
+      if (selectedUser.value?.type === 'group') {
+        await chatStore.sendMessage({
+          content: message.value,
+          groupId: String(selectedUser.value._id),
+          attachment: selectedFile.value,
+          replyTo: replyingMessageId.value,
+        })
+      } else {
+        await chatStore.sendMessage({
+          content: message.value,
+          receiverId: String(selectedUser.value._id),
+          attachment: selectedFile.value,
+          replyTo: replyingMessageId.value,
+        })
+      }
 
       isReplying.value = false
       replyingMessageId.value = null
     } else {
-      await chatStore.sendMessage({
-        content: message.value,
-        receiverId: String(selectedUser.value._id),
-        attachment: selectedFile.value,
-      })
+      if (selectedUser.value?.type === 'group') {
+        await chatStore.sendMessage({
+          content: message.value,
+          groupId: String(selectedUser.value._id),
+          attachment: selectedFile.value,
+        })
+      } else {
+        await chatStore.sendMessage({
+          content: message.value,
+          receiverId: String(selectedUser.value._id),
+          attachment: selectedFile.value,
+        })
+      }
     }
 
     message.value = ''
