@@ -586,6 +586,7 @@ const selectUser = (user: LocalUser) => {
   const chatUser: User = {
     _id: String(user?._id),
     name: user?.name,
+    type: selectedUser.value?.type,
   }
   chatStore.setCurrentChat({ ...chatUser })
 }
